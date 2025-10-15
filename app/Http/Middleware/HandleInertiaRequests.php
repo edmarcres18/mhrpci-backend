@@ -54,6 +54,19 @@ class HandleInertiaRequests extends Middleware
             ];
         });
         
+        // Regenerate CSRF token periodically to prevent expiration
+        // Only regenerate if the session is active and the token is older than 1 hour
+        if ($request->session()->has('_token')) {
+            $lastTokenRefresh = $request->session()->get('_token_refreshed_at', 0);
+            $currentTime = time();
+            
+            // Refresh token every hour to keep it valid
+            if ($currentTime - $lastTokenRefresh > 3600) {
+                $request->session()->regenerateToken();
+                $request->session()->put('_token_refreshed_at', $currentTime);
+            }
+        }
+        
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -71,6 +84,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+            'csrf_token' => csrf_token(), // Share current CSRF token with frontend
         ];
     }
 }
