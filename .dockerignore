@@ -1,0 +1,43 @@
+# Keep Docker build context small and consistent across environments
+# Do NOT exclude docker/supervisor/supervisord.conf as it is copied in Dockerfile
+
+# VCS
+.git
+.gitignore
+
+# Docker files not needed in context (Dockerfile is needed by name)
+docker-compose.yml
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Laravel / PHP
+/vendor
+/storage/*.key
+/storage/pail
+/storage/app/backups
+/public/build
+/public/hot
+/public/storage
+
+# Env and local config
+.env
+.env.*
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+/auth.json
+
+# IDE / OS
+.DS_Store
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+
+# Explicitly ensure the supervisor config is included (even if a future rule excludes docker/)
+!docker/supervisor/supervisord.conf

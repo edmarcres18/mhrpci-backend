@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\DatabaseBackupController;
@@ -13,11 +14,33 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard API Routes (JSON responses for authenticated users)
+    Route::prefix('api/dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getStats'])
+            ->name('api.dashboard.stats');
+        
+        Route::get('/user-growth', [DashboardController::class, 'getUserGrowth'])
+            ->name('api.dashboard.user-growth');
+        
+        Route::get('/recent-users', [DashboardController::class, 'getRecentUsers'])
+            ->name('api.dashboard.recent-users');
+        
+        Route::get('/recent-invitations', [DashboardController::class, 'getRecentInvitations'])
+            ->name('api.dashboard.recent-invitations');
+        
+        Route::get('/recent-backups', [DashboardController::class, 'getRecentBackups'])
+            ->name('api.dashboard.recent-backups');
+        
+        Route::post('/clear-cache', [DashboardController::class, 'clearCache'])
+            ->middleware(EnsureUserIsSystemAdmin::class)
+            ->name('api.dashboard.clear-cache');
+    });
+    
     // User Management (Admin and System Admin only)
     Route::resource('users', UserController::class);
     

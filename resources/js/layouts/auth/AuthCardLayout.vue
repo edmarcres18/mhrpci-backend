@@ -9,11 +9,14 @@ import {
 } from '@/components/ui/card';
 import { home } from '@/routes';
 import { Link } from '@inertiajs/vue3';
+import { useSiteSettings } from '@/composables/useSiteSettings';
 
 defineProps<{
     title?: string;
     description?: string;
 }>();
+
+const { siteSettings } = useSiteSettings();
 </script>
 
 <template>
@@ -23,13 +26,21 @@ defineProps<{
         <div class="flex w-full max-w-md flex-col gap-6">
             <Link
                 :href="home()"
-                class="flex items-center gap-2 self-center font-medium"
+                class="flex flex-col items-center gap-2 self-center font-medium"
             >
-                <div class="flex h-9 w-9 items-center justify-center">
+                <div class="flex h-16 w-16 items-center justify-center rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-800">
+                    <img 
+                        v-if="siteSettings.site_logo" 
+                        :src="siteSettings.site_logo" 
+                        :alt="siteSettings.site_name"
+                        class="h-14 w-14 object-contain"
+                    />
                     <AppLogoIcon
+                        v-else
                         class="size-9 fill-current text-black dark:text-white"
                     />
                 </div>
+                <span v-if="siteSettings.site_name" class="text-base font-semibold">{{ siteSettings.site_name }}</span>
             </Link>
 
             <div class="flex flex-col gap-6">

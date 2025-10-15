@@ -2,8 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteInformation;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -40,9 +43,21 @@ class HandleInertiaRequests extends Middleware
 
         $user = $request->user();
         
+        // Cache site settings for 1 hour
+        $siteSettings = Cache::remember('site_info_settings', 3600, function () {
+            $siteInfo = SiteInformation::first();
+            return [
+                'site_name' => $siteInfo?->site_name ?? 'Laravel Starter Kit',
+                'site_logo' => $siteInfo?->site_logo 
+                    ? Storage::url($siteInfo->site_logo) 
+                    : null,
+            ];
+        });
+        
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'siteSettings' => $siteSettings,
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $user,

@@ -2,15 +2,17 @@
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { home } from '@/routes';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useSiteSettings } from '@/composables/useSiteSettings';
 
 const page = usePage();
-const name = page.props.name;
 const quote = page.props.quote;
 
 defineProps<{
     title?: string;
     description?: string;
 }>();
+
+const { siteSettings } = useSiteSettings();
 </script>
 
 <template>
@@ -25,8 +27,19 @@ defineProps<{
                 :href="home()"
                 class="relative z-20 flex items-center text-lg font-medium"
             >
-                <AppLogoIcon class="mr-2 size-8 fill-current text-white" />
-                {{ name }}
+                <div class="mr-2 flex h-8 w-8 items-center justify-center">
+                    <img 
+                        v-if="siteSettings.site_logo" 
+                        :src="siteSettings.site_logo" 
+                        :alt="siteSettings.site_name"
+                        class="h-8 w-8 object-contain"
+                    />
+                    <AppLogoIcon 
+                        v-else 
+                        class="size-8 fill-current text-white" 
+                    />
+                </div>
+                {{ siteSettings.site_name }}
             </Link>
             <div v-if="quote" class="relative z-20 mt-auto">
                 <blockquote class="space-y-2">
