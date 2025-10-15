@@ -1,9 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleCors;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,23 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // CRITICAL: Trust all proxies for HTTPS detection in production
-        // This allows Laravel to properly detect HTTPS when behind Nginx/Load Balancer
-        $middleware->trustProxies(
-            at: '*',
-            headers: Request::HEADER_X_FORWARDED_FOR |
-                Request::HEADER_X_FORWARDED_HOST |
-                Request::HEADER_X_FORWARDED_PORT |
-                Request::HEADER_X_FORWARDED_PROTO |
-                Request::HEADER_X_FORWARDED_AWS_ELB
-        );
-
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
-        // Use custom CSRF token verification middleware
-        $middleware->validateCsrfTokens(except: [
-            // Add any routes that should be excluded from CSRF verification
-        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,
@@ -42,13 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        $middleware->api(prepend: [
-            HandleCors::class,
-        ]);
-        
+        // Register middleware aliases
         $middleware->alias([
             'validate.invitation' => \App\Http\Middleware\ValidateInvitation::class,
         ]);
+
+        // Trust proxy headers so Laravel correctly detects HTTPS when behind Nginx/Cloudflare
+        // This prevents mixed-content by ensuring generated URLs use the https scheme.
+        $middleware->trustProxies(at: '*', headers:
+            Request::HEADER_X_FORWARDED_FOR |
+            Request::HEADER_X_FORWARDED_HOST |
+            Request::HEADER_X_FORWARDED_PORT |
+            Request::HEADER_X_FORWARDED_PROTO |
+            Request::HEADER_X_FORWARDED_AWS_ELB
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
