@@ -64,7 +64,10 @@ export function initializeTheme() {
     updateTheme(savedAppearance || 'system');
 
     // Set up system theme change listener...
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+    const mq = mediaQuery();
+    if (mq) {
+        mq.addEventListener('change', handleSystemThemeChange);
+    }
 }
 
 const appearance = ref<Appearance>('system');

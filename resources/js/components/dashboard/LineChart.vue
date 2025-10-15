@@ -129,7 +129,7 @@ onMounted(() => {
     
     // Add resize observer for responsive canvas
     if (canvasRef.value) {
-        resizeObserver = new ResizeObserver(() => {
+        resizeObserver = new ResizeObserver((entries) => {
             initCanvas();
         });
         resizeObserver.observe(canvasRef.value.parentElement!);

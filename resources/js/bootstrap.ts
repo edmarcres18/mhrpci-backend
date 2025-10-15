@@ -4,15 +4,18 @@ import axios from 'axios';
  * Configure Axios for Laravel
  * This sets up CSRF token handling and default headers
  */
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-axios.defaults.headers.common['Accept'] = 'application/json';
 
 // Get CSRF token from meta tag
 const token = document.head.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
 
-if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
-} else {
+// Configure axios with a single defaults object
+Object.assign(axios.defaults.headers.common, {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Accept': 'application/json',
+    ...(token && { 'X-CSRF-TOKEN': token.content })
+});
+
+if (!token) {
     console.error('CSRF token not found. Make sure the meta tag is present in your HTML.');
 }
 
