@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\UserRole;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -14,8 +13,8 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create System Admin user
-        User::factory()->create([
+        // Create System Admin user without using factories (avoids Faker in production)
+        User::query()->create([
             'name' => 'System Administrator',
             'email' => 'system.admin@example.com',
             'password' => bcrypt('password'), // Explicitly using bcrypt
@@ -24,7 +23,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Create Admin user
-        User::factory()->create([
+        User::query()->create([
             'name' => 'Administrator',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'), // Explicitly using bcrypt
@@ -33,7 +32,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Create Staff user
-        User::factory()->create([
+        User::query()->create([
             'name' => 'Staff Member',
             'email' => 'staff@example.com',
             'password' => bcrypt('password'), // Explicitly using bcrypt

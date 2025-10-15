@@ -1,6 +1,14 @@
 <?php
 
-use Laravel\Sanctum\Sanctum;
+// Do NOT hard-reference Sanctum classes at config load to prevent fatal errors
+// if the package is not installed yet on some environments.
+// We'll compute defaults without calling Sanctum statics.
+
+// Pre-compute APP_URL host:port without using closures to keep config cacheable
+$__appUrl = (string) env('APP_URL', '');
+$__appHost = $__appUrl ? parse_url($__appUrl, PHP_URL_HOST) : null;
+$__appPort = $__appUrl ? parse_url($__appUrl, PHP_URL_PORT) : null;
+$__appHostPort = $__appHost ? ($__appPort ? $__appHost.':'.$__appPort : $__appHost) : null;
 
 return [
 
@@ -15,12 +23,15 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
-    ))),
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', implode(',', array_filter([
+        'localhost',
+        'localhost:3000',
+        '127.0.0.1',
+        '127.0.0.1:8000',
+        '::1',
+        // Include current APP_URL host if set (without scheme)
+        $__appHostPort,
+    ])))),
 
     /*
     |--------------------------------------------------------------------------
@@ -76,9 +87,10 @@ return [
     */
 
     'middleware' => [
-        'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
-        'encrypt_cookies' => Illuminate\Cookie\Middleware\EncryptCookies::class,
-        'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        // Use string class names to avoid referencing classes before autoload is ready
+        'authenticate_session' => 'Laravel\\Sanctum\\Http\\Middleware\\AuthenticateSession',
+        'encrypt_cookies' => 'Illuminate\\Cookie\\Middleware\\EncryptCookies',
+        'validate_csrf_token' => 'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
     ],
 
 ];
