@@ -21,8 +21,6 @@ class HandleCors
             'http://127.0.0.1:8000',
             'http://localhost',
             'http://127.0.0.1',
-            'https://adminpci.mhrpci.site',
-            env('APP_URL'),
         ];
 
         $origin = $request->header('Origin');
