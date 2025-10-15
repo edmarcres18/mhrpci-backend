@@ -30,9 +30,10 @@ class HandleCors
         // Add CORS headers
         if (in_array($origin, $allowedOrigins) || app()->environment('local')) {
             $response->headers->set('Access-Control-Allow-Origin', $origin ?? '*');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-TOKEN, X-XSRF-TOKEN');
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-CSRF-TOKEN');
             $response->headers->set('Access-Control-Max-Age', '86400');
         }
 
