@@ -65,25 +65,25 @@ const limits = {
       <form @submit.prevent="submit" class="space-y-5">
         <div>
           <label for="inventory_name" class="mb-1 block text-sm font-medium">Inventory Name</label>
-          <input id="inventory_name" v-model="form.inventory_name" type="text" :maxlength="limits.inventory_name" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white" />
+          <input id="inventory_name" v-model="form.inventory_name" type="text" :maxlength="limits.inventory_name" placeholder="Enter inventory name" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white" />
           <div v-if="form.errors.inventory_name" class="mt-1 text-sm text-red-600">{{ form.errors.inventory_name }}</div>
         </div>
 
         <div>
           <label for="accountable_by_name" class="mb-1 block text-sm font-medium">Accountable By</label>
-          <input id="accountable_by_name" v-model="form.accountable_by_name" type="text" :maxlength="limits.accountable_by_name" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white" />
+          <input id="accountable_by_name" v-model="form.accountable_by_name" type="text" :maxlength="limits.accountable_by_name" placeholder="Enter accountable person's name" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white" />
           <div v-if="form.errors.accountable_by_name" class="mt-1 text-sm text-red-600">{{ form.errors.accountable_by_name }}</div>
         </div>
 
         <div>
           <label for="descriptions" class="mb-1 block text-sm font-medium">Descriptions</label>
-          <textarea id="descriptions" v-model="form.descriptions" :maxlength="limits.descriptions" rows="6" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white"></textarea>
+          <textarea id="descriptions" v-model="form.descriptions" :maxlength="limits.descriptions" rows="6" placeholder="Describe the inventory (optional)" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white"></textarea>
           <div v-if="form.errors.descriptions" class="mt-1 text-sm text-red-600">{{ form.errors.descriptions }}</div>
         </div>
 
         <div>
           <label for="remarks" class="mb-1 block text-sm font-medium">Remarks</label>
-          <textarea id="remarks" v-model="form.remarks" :maxlength="limits.remarks" rows="4" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white"></textarea>
+          <textarea id="remarks" v-model="form.remarks" :maxlength="limits.remarks" rows="4" placeholder="Add any remarks (optional)" class="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white"></textarea>
           <div v-if="form.errors.remarks" class="mt-1 text-sm text-red-600">{{ form.errors.remarks }}</div>
         </div>
 
