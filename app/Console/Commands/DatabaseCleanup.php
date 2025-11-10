@@ -12,7 +12,7 @@ class DatabaseCleanup extends Command
      *
      * @var string
      */
-    protected $signature = 'backup:cleanup {--days=30 : Number of days to keep backups}';
+    protected $signature = 'backup:cleanup {--days=7 : Number of days to keep backups}';
 
     /**
      * The console command description.

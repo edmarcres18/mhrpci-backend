@@ -252,6 +252,42 @@ function formatDate(dateString: string): string {
     minute: '2-digit',
   });
 }
+
+// Pagination state and logic
+const perPage = ref<number>(10);
+const perPageOptions = [10, 25, 50, 100] as const;
+const currentPage = ref<number>(1);
+
+const totalPages = computed(() => {
+  const total = backups.value.length;
+  return total > 0 ? Math.ceil(total / perPage.value) : 1;
+});
+
+const pagedBackups = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return backups.value.slice(start, start + perPage.value);
+});
+
+const pageStartIndex = computed(() => (backups.value.length === 0 ? 0 : (currentPage.value - 1) * perPage.value + 1));
+const pageEndIndex = computed(() => Math.min(backups.value.length, currentPage.value * perPage.value));
+
+watch(perPage, () => {
+  currentPage.value = 1;
+});
+
+watch(backups, () => {
+  const max = totalPages.value;
+  if (currentPage.value > max) currentPage.value = max;
+  if (currentPage.value < 1) currentPage.value = 1;
+});
+
+function goPrevPage() {
+  if (currentPage.value > 1) currentPage.value--;
+}
+
+function goNextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+}
 </script>
 
 <template>
@@ -330,6 +366,41 @@ function formatDate(dateString: string): string {
           <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{{ backups.length }} backup{{ backups.length !== 1 ? 's' : '' }} available</p>
         </div>
 
+        <!-- Pagination Controls -->
+        <div class="p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">Show</span>
+            <select v-model.number="perPage" class="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+              <option v-for="opt in perPageOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">per page</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">
+              Showing {{ pageStartIndex }}–{{ pageEndIndex }} of {{ backups.length }}
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                @click="goPrevPage"
+                :disabled="currentPage <= 1"
+                class="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+              >
+                Prev
+              </button>
+              <span class="text-xs text-neutral-700 dark:text-neutral-300">
+                Page {{ currentPage }} of {{ totalPages }}
+              </span>
+              <button
+                @click="goNextPage"
+                :disabled="currentPage >= totalPages"
+                class="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div v-if="backups.length === 0" class="p-10 text-center">
           <Database class="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700" />
           <p class="mt-4 text-sm text-neutral-600 dark:text-neutral-400">No backups yet. Create your first backup to get started.</p>
@@ -337,7 +408,7 @@ function formatDate(dateString: string): string {
 
         <!-- Mobile list -->
         <div v-else class="divide-y divide-sidebar-border/70 dark:divide-sidebar-border sm:hidden">
-          <div v-for="backup in backups" :key="backup.filename" class="p-4">
+          <div v-for="backup in pagedBackups" :key="backup.filename" class="p-4">
             <div class="flex items-start gap-3">
               <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
                 <Database class="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
@@ -393,7 +464,7 @@ function formatDate(dateString: string): string {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="backup in backups" :key="backup.filename" class="border-t border-sidebar-border/70 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900/60">
+                <tr v-for="backup in pagedBackups" :key="backup.filename" class="border-t border-sidebar-border/70 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900/60">
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-3">
                       <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
