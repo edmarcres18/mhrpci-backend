@@ -47,6 +47,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // IT Inventories Management (Admin and System Admin only)
     Route::resource('it-inventories', ItInventoryController::class);
+    // Batch create inventories by accountable person
+    Route::get('it-inventories/batch-create', [ItInventoryController::class, 'createBatch'])->name('it-inventories.batch-create');
+    Route::post('it-inventories/batch-store', [ItInventoryController::class, 'storeBatch'])->name('it-inventories.batch-store');
     
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class ItInventoryController extends Controller
 {
@@ -235,6 +236,80 @@ class ItInventoryController extends Controller
         return redirect()
             ->route('it-inventories.index')
             ->with('success', 'Inventory item updated successfully.');
+    }
+
+    /**
+     * Show batch create form: enter accountable name and multiple assets.
+     */
+    public function createBatch(): Response
+    {
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to manage IT inventories.');
+        }
+
+        $categories = ['Laptop', 'Desktop', 'Server', 'Peripheral', 'Network', 'Software', 'Other'];
+
+        return Inertia::render('ItInventories/BatchCreate', [
+            'statuses' => $this->validStatuses,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Store multiple inventories for one accountable person.
+     */
+    public function storeBatch(Request $request)
+    {
+        $currentUser = auth()->user();
+        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+            abort(403, 'You do not have permission to manage IT inventories.');
+        }
+
+        $validated = $request->validate([
+            'assigned_to' => ['required', 'string', 'max:150'],
+            'assets' => ['required', 'array', 'min:1'],
+            'assets.*.asset_tag' => ['required', 'string', 'max:100', 'distinct', Rule::unique('it_inventories', 'asset_tag')],
+            'assets.*.category' => ['required', 'string', 'max:100'],
+            'assets.*.type' => ['nullable', 'string', 'max:150'],
+            'assets.*.brand' => ['nullable', 'string', 'max:100'],
+            'assets.*.model' => ['nullable', 'string', 'max:150'],
+            'assets.*.serial_number' => ['nullable', 'string', 'max:150', 'distinct', Rule::unique('it_inventories', 'serial_number')],
+            'assets.*.status' => ['required', 'string', Rule::in($this->validStatuses)],
+            'assets.*.location' => ['nullable', 'string', 'max:150'],
+            'assets.*.purchase_date' => ['nullable', 'date'],
+            'assets.*.purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'assets.*.supplier' => ['nullable', 'string', 'max:150'],
+            'assets.*.warranty_expires_at' => ['nullable', 'date'],
+            'assets.*.notes' => ['nullable', 'string', 'max:1000'],
+            // Optional color, merged into notes on save
+            'assets.*.color' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['assets'] as $asset) {
+                $notes = trim(($asset['notes'] ?? '') . ((isset($asset['color']) && $asset['color'] !== '') ? ((($asset['notes'] ?? '') !== '' ? ' ' : '') . 'Color: ' . $asset['color']) : ''));
+
+                ItInventory::create([
+                    'asset_tag' => $asset['asset_tag'],
+                    'category' => $asset['category'],
+                    'type' => $asset['type'] ?? null,
+                    'brand' => $asset['brand'] ?? null,
+                    'model' => $asset['model'] ?? null,
+                    'serial_number' => $asset['serial_number'] ?? null,
+                    'status' => $asset['status'],
+                    'location' => $asset['location'] ?? null,
+                    'assigned_to' => $validated['assigned_to'],
+                    'purchase_date' => $asset['purchase_date'] ?? null,
+                    'purchase_cost' => $asset['purchase_cost'] ?? null,
+                    'supplier' => $asset['supplier'] ?? null,
+                    'warranty_expires_at' => $asset['warranty_expires_at'] ?? null,
+                    'notes' => $notes,
+                ]);
+            }
+        });
+
+        return redirect()->route('it-inventories.index')->with('success', 'Inventory items created successfully for ' . $validated['assigned_to'] . '.');
     }
 
     /**

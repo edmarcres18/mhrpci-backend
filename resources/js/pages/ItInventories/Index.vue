@@ -209,6 +209,7 @@ function getStatusBadgeColor(st?: string) {
             </select>
           </div>
           <Link href="/it-inventories/create" class="rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-black/90 dark:bg-white dark:text-black">Add Inventory</Link>
+          <Link href="/it-inventories/batch-create" class="rounded-md border px-4 py-2 text-sm font-medium shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800">Batch Add by Person</Link>
         </div>
       </div>
 
