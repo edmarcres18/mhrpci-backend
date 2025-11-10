@@ -43,9 +43,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // User Management (Admin and System Admin only)
     Route::resource('users', UserController::class);
-
-    // IT Inventories Management (Admin and System Admin only)
-    Route::resource('it-inventories', \App\Http\Controllers\ItInventoryController::class);
     
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');

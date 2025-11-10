@@ -13,10 +13,6 @@ return new class extends Migration
     {
         Schema::create('it_inventories', function (Blueprint $table) {
             $table->id();
-            $table->string('inventory_name');
-            $table->text('descriptions')->nullable();
-            $table->string('accountable_by_name')->nullable();
-            $table->text('remarks')->nullable();
             $table->timestamps();
         });
     }

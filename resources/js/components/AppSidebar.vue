@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavGroup } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Info, Settings, Database, Users, Boxes } from 'lucide-vue-next';
+import { LayoutGrid, Info, Settings, Database, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -43,11 +43,6 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     title: 'Users',
                     href: '/users',
                     icon: Users,
-                },
-                {
-                    title: 'IT Inventories',
-                    href: '/it-inventories',
-                    icon: Boxes,
                 },
             ],
         });
