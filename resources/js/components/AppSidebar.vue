@@ -58,6 +58,11 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     href: '/site-information',
                     icon: Info,
                 },
+                {
+                    title: 'IT Inventories',
+                    href: '/it-inventories',
+                    icon: Database,
+                },
             ],
         });
     }
