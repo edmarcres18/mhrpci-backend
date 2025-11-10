@@ -7,6 +7,7 @@ use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ItInventoryController;
 use App\Http\Middleware\EnsureUserHasAdminPrivileges;
 use App\Http\Middleware\EnsureUserIsSystemAdmin;
 
@@ -43,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // User Management (Admin and System Admin only)
     Route::resource('users', UserController::class);
+
+    // IT Inventories Management (Admin and System Admin only)
+    Route::resource('it-inventories', ItInventoryController::class);
     
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');

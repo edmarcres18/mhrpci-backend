@@ -13,6 +13,29 @@ return new class extends Migration
     {
         Schema::create('it_inventories', function (Blueprint $table) {
             $table->id();
+
+            // Core identification
+            $table->string('asset_tag')->unique();
+            $table->string('category')->index(); // e.g., Laptop, Desktop, Server, Peripheral
+            $table->string('type')->nullable(); // e.g., MacBook Pro, ThinkPad, etc.
+            $table->string('brand')->nullable();
+            $table->string('model')->nullable();
+            $table->string('serial_number')->nullable()->unique();
+
+            // Ownership and location
+            $table->string('status')->default('stock')->index(); // stock, in_use, repair, retired, lost
+            $table->string('location')->nullable();
+            $table->foreignId('assigned_to_user_id')->nullable()->constrained('users')->nullOnDelete();
+
+            // Procurement details
+            $table->date('purchase_date')->nullable();
+            $table->decimal('purchase_cost', 10, 2)->nullable();
+            $table->string('supplier')->nullable();
+            $table->date('warranty_expires_at')->nullable();
+
+            // Misc
+            $table->text('notes')->nullable();
+
             $table->timestamps();
         });
     }
