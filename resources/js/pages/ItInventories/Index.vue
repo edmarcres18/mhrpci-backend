@@ -22,7 +22,7 @@ interface InventoryItem {
   serial_number?: string | null;
   status?: string;
   location?: string | null;
-  assigned_to?: { id: number; name: string } | null;
+  assigned_to?: string | null;
   created_at?: string | null;
 }
 
@@ -234,7 +234,7 @@ function getStatusBadgeColor(st?: string) {
               <td class="px-4 py-3 text-sm">
                 <span class="inline-flex rounded px-2 py-1 text-xs" :class="getStatusBadgeColor(inv.status)">{{ inv.status }}</span>
               </td>
-              <td class="px-4 py-3 text-sm">{{ inv.assigned_to?.name || 'Unassigned' }}</td>
+              <td class="px-4 py-3 text-sm">{{ inv.assigned_to || '—' }}</td>
               <td class="px-4 py-3 text-sm">{{ inv.location || '—' }}</td>
               <td class="px-4 py-3 text-sm">{{ inv.created_at || '—' }}</td>
               <td class="px-4 py-3 text-sm">

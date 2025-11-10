@@ -25,7 +25,8 @@ return new class extends Migration
             // Ownership and location
             $table->string('status')->default('stock')->index(); // stock, in_use, repair, retired, lost
             $table->string('location')->nullable();
-            $table->foreignId('assigned_to_user_id')->nullable()->constrained('users')->nullOnDelete();
+            // Assigned to: free-form person or department name (nullable)
+            $table->string('assigned_to')->nullable();
 
             // Procurement details
             $table->date('purchase_date')->nullable();

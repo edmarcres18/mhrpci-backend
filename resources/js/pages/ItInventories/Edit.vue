@@ -3,8 +3,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, reactive, watch, onBeforeUnmount } from 'vue';
 import Toast from './Toast.vue';
-
-interface UserOption { id: number; name: string }
 interface Inventory {
   id: number;
   asset_tag: string;
@@ -15,7 +13,7 @@ interface Inventory {
   serial_number?: string | null;
   status: string;
   location?: string | null;
-  assigned_to_user_id: number | null;
+  assigned_to?: string | null;
   purchase_date?: string | null;
   purchase_cost?: string | number | null;
   supplier?: string | null;
@@ -23,7 +21,7 @@ interface Inventory {
   notes?: string | null;
 }
 
-const props = defineProps<{ inventory: Inventory; statuses: string[]; categories: string[]; users: UserOption[] }>();
+const props = defineProps<{ inventory: Inventory; statuses: string[]; categories: string[] }>();
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -40,7 +38,7 @@ const form = useForm({
   serial_number: props.inventory.serial_number ?? '',
   status: props.inventory.status ?? 'stock',
   location: props.inventory.location ?? '',
-  assigned_to_user_id: props.inventory.assigned_to_user_id ?? null,
+  assigned_to: props.inventory.assigned_to ?? '',
   purchase_date: props.inventory.purchase_date ?? '',
   purchase_cost: props.inventory.purchase_cost ?? '',
   supplier: props.inventory.supplier ?? '',
@@ -190,11 +188,8 @@ function submit() {
         <!-- Assignment -->
         <div class="space-y-2">
           <label class="block text-sm font-semibold">Assigned To</label>
-          <select v-model.number="form.assigned_to_user_id" class="w-full rounded-lg border px-4 py-3 text-sm dark:bg-neutral-900 dark:text-white">
-            <option :value="null">Unassigned</option>
-            <option v-for="u in props.users" :key="u.id" :value="u.id">{{ u.name }}</option>
-          </select>
-          <div v-if="form.errors.assigned_to_user_id" class="text-sm text-red-600">{{ form.errors.assigned_to_user_id }}</div>
+          <input v-model="form.assigned_to" type="text" class="w-full rounded-lg border px-4 py-3 text-sm dark:bg-neutral-900 dark:text-white" :class="{ 'border-red-500': form.errors.assigned_to }" />
+          <div v-if="form.errors.assigned_to" class="text-sm text-red-600">{{ form.errors.assigned_to }}</div>
         </div>
 
         <!-- Procurement -->

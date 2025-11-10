@@ -12,7 +12,7 @@ interface InventoryDetail {
   serial_number?: string | null;
   status: string;
   location?: string | null;
-  assigned_to?: { id: number; name: string } | null;
+  assigned_to?: string | null;
   purchase_date?: string | null;
   purchase_cost?: string | number | null;
   supplier?: string | null;
@@ -54,7 +54,7 @@ const breadcrumbs = [
             <div class="flex justify-between"><span class="text-neutral-500">Serial</span><span class="font-medium">{{ props.inventory.serial_number || '—' }}</span></div>
             <div class="flex justify-between"><span class="text-neutral-500">Status</span><span class="font-medium">{{ props.inventory.status }}</span></div>
             <div class="flex justify-between"><span class="text-neutral-500">Location</span><span class="font-medium">{{ props.inventory.location || '—' }}</span></div>
-            <div class="flex justify-between"><span class="text-neutral-500">Assigned To</span><span class="font-medium">{{ props.inventory.assigned_to?.name || 'Unassigned' }}</span></div>
+            <div class="flex justify-between"><span class="text-neutral-500">Assigned To</span><span class="font-medium">{{ props.inventory.assigned_to || '—' }}</span></div>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+// use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ItInventory extends Model
 {
@@ -18,7 +18,7 @@ class ItInventory extends Model
         'serial_number',
         'status',
         'location',
-        'assigned_to_user_id',
+        'assigned_to',
         'purchase_date',
         'purchase_cost',
         'supplier',
@@ -32,8 +32,5 @@ class ItInventory extends Model
         'purchase_cost' => 'decimal:2',
     ];
 
-    public function assignedTo(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'assigned_to_user_id');
-    }
+    // Relationship removed: assigned_to is stored as a free-form string
 }

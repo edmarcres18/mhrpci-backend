@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ItInventory;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -68,7 +67,7 @@ class ItInventoryController extends Controller
                     'serial_number' => $inv->serial_number,
                     'status' => $inv->status,
                     'location' => $inv->location,
-                    'assigned_to' => $inv->assignedTo?->only(['id', 'name']),
+                    'assigned_to' => $inv->assigned_to,
                     'created_at' => optional($inv->created_at)->toDateTimeString(),
                 ];
             });
@@ -94,13 +93,11 @@ class ItInventoryController extends Controller
             abort(403, 'You do not have permission to access IT inventories.');
         }
 
-        $users = User::orderBy('name')->get(['id', 'name']);
         $categories = ['Laptop', 'Desktop', 'Server', 'Peripheral', 'Network', 'Software', 'Other'];
 
         return Inertia::render('ItInventories/Create', [
             'statuses' => $this->validStatuses,
             'categories' => $categories,
-            'users' => $users,
         ]);
     }
 
@@ -123,7 +120,7 @@ class ItInventoryController extends Controller
             'serial_number' => ['nullable', 'string', 'max:150', 'unique:it_inventories,serial_number'],
             'status' => ['required', 'string', Rule::in($this->validStatuses)],
             'location' => ['nullable', 'string', 'max:150'],
-            'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'string', 'max:150'],
             'purchase_date' => ['nullable', 'date'],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
             'supplier' => ['nullable', 'string', 'max:150'],
@@ -159,7 +156,7 @@ class ItInventoryController extends Controller
                 'serial_number' => $itInventory->serial_number,
                 'status' => $itInventory->status,
                 'location' => $itInventory->location,
-                'assigned_to' => $itInventory->assignedTo?->only(['id', 'name']),
+                'assigned_to' => $itInventory->assigned_to,
                 'purchase_date' => optional($itInventory->purchase_date)?->toDateString(),
                 'purchase_cost' => $itInventory->purchase_cost,
                 'supplier' => $itInventory->supplier,
@@ -181,7 +178,6 @@ class ItInventoryController extends Controller
             abort(403, 'You do not have permission to manage IT inventories.');
         }
 
-        $users = User::orderBy('name')->get(['id', 'name']);
         $categories = ['Laptop', 'Desktop', 'Server', 'Peripheral', 'Network', 'Software', 'Other'];
 
         return Inertia::render('ItInventories/Edit', [
@@ -195,7 +191,7 @@ class ItInventoryController extends Controller
                 'serial_number' => $itInventory->serial_number,
                 'status' => $itInventory->status,
                 'location' => $itInventory->location,
-                'assigned_to_user_id' => $itInventory->assigned_to_user_id,
+                'assigned_to' => $itInventory->assigned_to,
                 'purchase_date' => optional($itInventory->purchase_date)?->toDateString(),
                 'purchase_cost' => $itInventory->purchase_cost,
                 'supplier' => $itInventory->supplier,
@@ -204,7 +200,6 @@ class ItInventoryController extends Controller
             ],
             'statuses' => $this->validStatuses,
             'categories' => $categories,
-            'users' => $users,
         ]);
     }
 
@@ -227,7 +222,7 @@ class ItInventoryController extends Controller
             'serial_number' => ['nullable', 'string', 'max:150', Rule::unique('it_inventories', 'serial_number')->ignore($itInventory->id)],
             'status' => ['required', 'string', Rule::in($this->validStatuses)],
             'location' => ['nullable', 'string', 'max:150'],
-            'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'assigned_to' => ['nullable', 'string', 'max:150'],
             'purchase_date' => ['nullable', 'date'],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
             'supplier' => ['nullable', 'string', 'max:150'],
