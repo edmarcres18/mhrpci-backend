@@ -46,10 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class);
 
     // IT Inventories Management (Admin and System Admin only)
-    Route::resource('it-inventories', ItInventoryController::class);
-    // Batch create inventories by accountable person
+    // Place custom routes BEFORE the resource to avoid shadowing by {it_inventory}
     Route::get('it-inventories/batch-create', [ItInventoryController::class, 'createBatch'])->name('it-inventories.batch-create');
     Route::post('it-inventories/batch-store', [ItInventoryController::class, 'storeBatch'])->name('it-inventories.batch-store');
+    Route::resource('it-inventories', ItInventoryController::class);
     
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');
