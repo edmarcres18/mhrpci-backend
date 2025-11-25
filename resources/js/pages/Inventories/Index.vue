@@ -65,6 +65,14 @@ const pages = computed<PageItem[]>(() => {
   result.push({ type: 'page', value: last - 1 }, { type: 'page', value: last });
   return result;
 });
+const isLoading = ref(false);
+const showingRange = computed(() => {
+  const total = pagination.value.total;
+  if (!total) return 'Showing 0 of 0';
+  const start = (pagination.value.current_page - 1) * pagination.value.per_page + 1;
+  const end = Math.min(pagination.value.current_page * pagination.value.per_page, total);
+  return `Showing ${start}–${end} of ${total}`;
+});
 const newAccountable = ref('');
 function goCreateAccountable() {
   const name = newAccountable.value.trim();
@@ -80,30 +88,45 @@ const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
 
 
 async function fetchGroups() {
-  const res = await axios.get('/api/inventories', {
-    params: {
-      search: search.value || undefined,
-      status: statusFilter.value || undefined,
-      perPage: perPage.value,
-      page: page.value,
-    },
-  });
-  if (res.data?.success) {
-    groups.value = res.data.data;
-    const p = res.data.pagination ?? { current_page: 1, last_page: 1, per_page: perPage.value, total: groups.value.length };
-    pagination.value = {
-      current_page: Number(p.current_page) || 1,
-      last_page: Number(p.last_page) || 1,
-      per_page: Number(p.per_page) || perPage.value,
-      total: Number(p.total) || groups.value.length,
-    };
-    page.value = pagination.value.current_page;
+  try {
+    isLoading.value = true;
+    const res = await axios.get('/api/inventories', {
+      params: {
+        search: search.value || undefined,
+        status: statusFilter.value || undefined,
+        perPage: perPage.value,
+        page: page.value,
+      },
+    });
+    if (res.data?.success) {
+      groups.value = res.data.data;
+      const p = res.data.pagination ?? { current_page: 1, last_page: 1, per_page: perPage.value, total: groups.value.length };
+      pagination.value = {
+        current_page: Number(p.current_page) || 1,
+        last_page: Number(p.last_page) || 1,
+        per_page: Number(p.per_page) || perPage.value,
+        total: Number(p.total) || groups.value.length,
+      };
+      page.value = pagination.value.current_page;
+    }
+  } catch (e: any) {
+    toast.type = 'error';
+    toast.message = e?.response?.data?.message || 'Failed to load inventories';
+    toast.show = true;
+    window.setTimeout(() => (toast.show = false), 3000);
+  } finally {
+    isLoading.value = false;
   }
 }
 
+let searchTimer: number | null = null;
 function onSearchInput() {
-  page.value = 1;
-  fetchGroups();
+  if (searchTimer) window.clearTimeout(searchTimer);
+  searchTimer = window.setTimeout(() => {
+    page.value = 1;
+    fetchGroups();
+    searchTimer = null;
+  }, 300);
 }
 
 function onPerPageChange() {
@@ -333,10 +356,11 @@ async function deleteAccountable(accountable: string) {
             <div class="text-sm text-muted-foreground mt-1">Try adjusting your search or refresh the list.</div>
             <Button class="mt-4" variant="secondary" @click="fetchGroups"><RefreshCw class="size-4" /> Refresh</Button>
           </div>
-          <div v-if="filteredGroups.length" class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
+          <nav v-if="filteredGroups.length" class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" aria-label="Pagination">
+            <div class="flex items-center gap-3">
+              <span class="text-sm text-muted-foreground">{{ showingRange }}</span>
               <span class="text-sm text-muted-foreground">Per page</span>
-              <select v-model.number="perPage" @change="onPerPageChange"
+              <select v-model.number="perPage" @change="onPerPageChange" :disabled="isLoading"
                 class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-28 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
                 <option :value="10">10</option>
                 <option :value="25">25</option>
@@ -345,14 +369,14 @@ async function deleteAccountable(accountable: string) {
               </select>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" :disabled="page <= 1" @click="prevPage">Previous</Button>
-              <template v-for="item in pages" :key="item.type === 'page' ? 'p-' + item.value + '-' + page : 'e-' + page">
-                <Button v-if="item.type === 'page'" size="sm" :variant="item.value === page ? 'secondary' : 'outline'" @click="goToPage(item.value)">{{ item.value }}</Button>
+              <Button variant="outline" size="sm" :disabled="isLoading || page <= 1" @click="prevPage">Previous</Button>
+              <template v-for="(item, idx) in pages" :key="item.type === 'page' ? 'p-' + item.value + '-' + page : 'e-' + page + '-' + idx">
+                <Button v-if="item.type === 'page'" size="sm" :disabled="isLoading || item.value === page" :aria-current="item.value === page ? 'page' : undefined" :variant="item.value === page ? 'secondary' : 'outline'" @click="goToPage(item.value)">{{ item.value }}</Button>
                 <span v-else class="text-muted-foreground px-2">…</span>
               </template>
-              <Button variant="outline" size="sm" :disabled="page >= pagination.last_page" @click="nextPage">Next</Button>
+              <Button variant="outline" size="sm" :disabled="isLoading || page >= pagination.last_page" @click="nextPage">Next</Button>
             </div>
-          </div>
+          </nav>
         </CardContent>
       </Card>
     </div>
