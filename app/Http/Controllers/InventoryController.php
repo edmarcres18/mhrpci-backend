@@ -51,15 +51,24 @@ class InventoryController extends Controller
             $base->where('inventory_status', $status);
         }
 
-        $accountables = $base->clone()
+        $namesQuery = $base->clone()
             ->select('inventory_accountable')
             ->distinct()
-            ->orderBy('inventory_accountable')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->orderBy('inventory_accountable');
+
+        $totalAccountables = $base->clone()
+            ->distinct()
+            ->count('inventory_accountable');
+
+        $lastPage = (int) max(1, (int) ceil($totalAccountables / $perPage));
+        $page = max(1, min($page, $lastPage));
+
+        $pageAccountables = $namesQuery
+            ->forPage($page, $perPage)
+            ->pluck('inventory_accountable');
 
         $groups = [];
-        foreach ($accountables->items() as $row) {
-            $acc = is_array($row) ? ($row['inventory_accountable'] ?? '') : ($row->inventory_accountable ?? '');
+        foreach ($pageAccountables as $acc) {
             if ($acc === '') { continue; }
 
             $itemsQ = Inventory::query()->where('inventory_accountable', $acc);
@@ -87,10 +96,10 @@ class InventoryController extends Controller
             'success' => true,
             'data' => $groups,
             'pagination' => [
-                'current_page' => $accountables->currentPage(),
-                'last_page' => $accountables->lastPage(),
-                'per_page' => $accountables->perPage(),
-                'total' => $accountables->total(),
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => (int) $totalAccountables,
             ],
         ]);
     }
