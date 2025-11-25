@@ -36,6 +36,12 @@ const groups = ref<InventoryGroup[]>([]);
 const search = ref('');
 const statusFilter = ref('');
 const totalItems = computed(() => groups.value.reduce((sum, g) => sum + g.items.length, 0));
+const newAccountable = ref('');
+function goCreateAccountable() {
+  const name = newAccountable.value.trim();
+  if (!name) return;
+  window.location.href = `/inventories/${encodeURIComponent(name)}`;
+}
 
 const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
   show: false,
@@ -85,8 +91,21 @@ const filteredGroups = computed(() => groups.value);
 
       <Card>
         <CardHeader>
+          <CardTitle>Quick Create Accountable</CardTitle>
+          <CardDescription>Enter a new accountable name to start managing its items.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <Input v-model="newAccountable" placeholder="e.g., IT Department" />
+            <Button class="w-full sm:w-auto" @click="goCreateAccountable">Create</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Guide: IT Inventories</CardTitle>
-          <CardDescription>Follow these steps to navigate and manage inventories.</CardDescription>
+          <CardDescription>Follow these steps to navigate, create, and manage IT inventories.</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid gap-6 sm:grid-cols-2">
@@ -96,12 +115,14 @@ const filteredGroups = computed(() => groups.value);
                 <li>This page lists accountables only. Item details are shown in the accountable’s page.</li>
                 <li>Use the search bar to quickly find an accountable by name.</li>
                 <li>Click <span class="font-medium text-foreground">View</span> to open the accountable and manage its items.</li>
+                <li>To create a new accountable, use <span class="font-medium text-foreground">Quick Create Accountable</span> above and press <span class="font-medium text-foreground">Create</span>.</li>
               </ul>
             </div>
             <div class="space-y-3">
               <div class="text-sm font-semibold">Actions</div>
               <ul class="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
                 <li>Export a group’s data using <span class="font-medium text-foreground">Excel</span> or <span class="font-medium text-foreground">PDF</span> from the card.</li>
+                <li>On the accountable page, use the <span class="font-medium text-foreground">Add Items</span> section to add new rows.</li>
                 <li>On the accountable page, you can add multiple items, edit existing ones, or delete items.</li>
                 <li>Exports are professionally formatted with clear borders for easy reading and printing.</li>
               </ul>

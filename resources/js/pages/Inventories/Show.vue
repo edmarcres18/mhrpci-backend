@@ -90,7 +90,6 @@ async function deleteItem(item: InventoryItem) {
 const newItems = ref<Pick<InventoryItem, 'inventory_name' | 'inventory_specification' | 'inventory_brand' | 'inventory_status'>[]>([
   { inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active' },
 ]);
-
 function addRow() {
   newItems.value.push({ inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active' });
 }
@@ -157,7 +156,7 @@ const filteredItems = computed(() => items.value);
       <Card>
         <CardHeader>
           <CardTitle>Guide: IT Inventories</CardTitle>
-          <CardDescription>Follow these steps to manage items within this accountable.</CardDescription>
+          <CardDescription>Follow these steps to create, edit, and manage items within this accountable.</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid gap-6 sm:grid-cols-2">
@@ -167,6 +166,7 @@ const filteredItems = computed(() => items.value);
                 <li>This page shows all items under the selected accountable.</li>
                 <li>Use the search and status filter to narrow down items.</li>
                 <li>Exports generate professional Excel/PDF files with clear borders.</li>
+                <li>Use the <span class="font-medium text-foreground">Add Items</span> section below to add new rows.</li>
               </ul>
             </div>
             <div class="space-y-3">
@@ -175,6 +175,7 @@ const filteredItems = computed(() => items.value);
                 <li>Add multiple new items using the batch form below.</li>
                 <li>Edit item fields inline; changes are saved immediately.</li>
                 <li>Delete items when they are no longer needed.</li>
+                <li>Use <span class="font-medium text-foreground">Save Items</span> to commit newly added rows.</li>
               </ul>
             </div>
           </div>
