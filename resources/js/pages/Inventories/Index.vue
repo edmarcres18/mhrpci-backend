@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle, Link as LinkIcon } from 'lucide-vue-next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from '@inertiajs/vue3';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
 
 type ToastType = 'success' | 'error';
 
@@ -26,7 +28,16 @@ interface InventoryItem {
 interface InventoryGroup {
   inventory_accountable: string;
   items: InventoryItem[];
+  total?: number;
 }
+
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+type PageItem = { type: 'page'; value: number } | { type: 'ellipsis' };
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -36,7 +47,26 @@ const breadcrumbs = [
 const groups = ref<InventoryGroup[]>([]);
 const search = ref('');
 const statusFilter = ref('');
-const totalItems = computed(() => groups.value.reduce((sum, g) => sum + g.items.length, 0));
+const perPage = ref<number>(10);
+const page = ref<number>(1);
+const pagination = ref<PaginationMeta>({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
+const totalItems = computed(() => groups.value.reduce((sum, g) => sum + (g.total ?? g.items.length), 0));
+const pages = computed<PageItem[]>(() => {
+  const last = pagination.value.last_page;
+  const current = page.value;
+  if (last <= 7) return Array.from({ length: last }, (_, i) => ({ type: 'page', value: i + 1 }));
+  const result: PageItem[] = [
+    { type: 'page', value: 1 },
+    { type: 'page', value: 2 },
+  ];
+  const start = Math.max(current - 1, 3);
+  const end = Math.min(current + 1, last - 2);
+  if (start > 3) result.push({ type: 'ellipsis' });
+  for (let i = start; i <= end; i++) result.push({ type: 'page', value: i });
+  if (end < last - 2) result.push({ type: 'ellipsis' });
+  result.push({ type: 'page', value: last - 1 }, { type: 'page', value: last });
+  return result;
+});
 const newAccountable = ref('');
 function goCreateAccountable() {
   const name = newAccountable.value.trim();
@@ -52,8 +82,55 @@ const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
 
 
 async function fetchGroups() {
-  const res = await axios.get('/api/inventories', { params: { search: search.value || undefined, status: statusFilter.value || undefined } });
-  if (res.data?.success) groups.value = res.data.data;
+  const res = await axios.get('/api/inventories', {
+    params: {
+      search: search.value || undefined,
+      status: statusFilter.value || undefined,
+      perPage: perPage.value,
+      page: page.value,
+    },
+  });
+  if (res.data?.success) {
+    groups.value = res.data.data;
+    const p = res.data.pagination ?? { current_page: 1, last_page: 1, per_page: perPage.value, total: groups.value.length };
+    pagination.value = {
+      current_page: Number(p.current_page) || 1,
+      last_page: Number(p.last_page) || 1,
+      per_page: Number(p.per_page) || perPage.value,
+      total: Number(p.total) || groups.value.length,
+    };
+    page.value = pagination.value.current_page;
+  }
+}
+
+function onSearchInput() {
+  page.value = 1;
+  fetchGroups();
+}
+
+function onPerPageChange() {
+  page.value = 1;
+  fetchGroups();
+}
+
+function goToPage(p: number) {
+  if (p < 1 || p > pagination.value.last_page || p === page.value) return;
+  page.value = p;
+  fetchGroups();
+}
+
+function prevPage() {
+  if (page.value > 1) {
+    page.value -= 1;
+    fetchGroups();
+  }
+}
+
+function nextPage() {
+  if (page.value < pagination.value.last_page) {
+    page.value += 1;
+    fetchGroups();
+  }
 }
 
 onMounted(fetchGroups);
@@ -72,11 +149,25 @@ function exportPdf(accountable?: string) {
 
 function namesWithCount(group: InventoryGroup) {
   const names = group.items.map((i) => i.inventory_name).slice(0, 3);
-  const remaining = Math.max(group.items.length - 3, 0);
+  const remaining = Math.max(((group.total ?? group.items.length) - 3), 0);
   return { names, remaining };
 }
 
 const filteredGroups = computed(() => groups.value);
+const selectedAccountables = ref<string[]>([]);
+function isSelected(acc: string) {
+  return selectedAccountables.value.includes(acc);
+}
+function toggleSelected(acc: string, checked: boolean | 'indeterminate') {
+  const arr = selectedAccountables.value.slice();
+  const idx = arr.indexOf(acc);
+  if (checked && idx === -1) arr.push(acc);
+  if (!checked && idx !== -1) arr.splice(idx, 1);
+  selectedAccountables.value = arr;
+}
+function onCardSelect(acc: string, v: boolean | 'indeterminate') {
+  toggleSelected(acc, v);
+}
 
 async function deleteAccountable(accountable: string) {
   if (!accountable) return;
@@ -98,6 +189,96 @@ async function deleteAccountable(accountable: string) {
     window.setTimeout(() => (toast.show = false), 3000);
   }
 }
+const shareOpen = ref(false);
+const shareAccountable = ref<string | null>(null);
+const shareScope = ref<'single' | 'selected' | 'all'>('single');
+const shareAccessType = ref<'anyone' | 'emails'>('anyone');
+const shareEmailsInput = ref('');
+const shareExpireDays = ref<number>(7);
+const shareLinks = ref<{ id: number; url: string; email?: string }[]>([]);
+const sharing = ref(false);
+
+function openShare(acc?: string) {
+  shareAccountable.value = acc && acc.length ? acc : null;
+  shareLinks.value = [];
+  shareScope.value = acc && acc.length ? 'single' : (selectedAccountables.value.length ? 'selected' : 'all');
+  shareAccessType.value = 'anyone';
+  shareEmailsInput.value = '';
+  shareExpireDays.value = 7;
+  shareOpen.value = true;
+}
+
+async function createShare() {
+  sharing.value = true;
+  try {
+    const emails = shareAccessType.value === 'emails'
+      ? shareEmailsInput.value.split(',').map((s) => s.trim().toLowerCase()).filter((s) => s)
+      : [];
+    let payload: any = {
+      accessType: shareAccessType.value,
+      emails,
+      expiresInDays: shareExpireDays.value || undefined,
+    };
+    if (shareScope.value === 'single') {
+      payload.accountable = shareAccountable.value as string;
+    } else if (shareScope.value === 'selected') {
+      if (!selectedAccountables.value.length) {
+        toast.type = 'error';
+        toast.message = 'Select accountables to share';
+        toast.show = true;
+        window.setTimeout(() => (toast.show = false), 3000);
+        sharing.value = false;
+        return;
+      }
+      payload.mode = 'multiple';
+      payload.accountables = selectedAccountables.value.slice();
+    } else {
+      payload.mode = 'all';
+    }
+    const res = await axios.post('/api/inventories/share', payload);
+    if (res.data?.success) {
+      shareLinks.value = res.data.links || [];
+      toast.type = 'success';
+      toast.message = 'Share links generated';
+      toast.show = true;
+      window.setTimeout(() => (toast.show = false), 3000);
+    } else {
+      toast.type = 'error';
+      toast.message = res.data?.errors?.[0] || 'Failed to generate links';
+      toast.show = true;
+      window.setTimeout(() => (toast.show = false), 3000);
+    }
+  } catch (e: any) {
+    toast.type = 'error';
+    toast.message = e?.response?.data?.errors?.[0] || 'Failed to generate links';
+    toast.show = true;
+    window.setTimeout(() => (toast.show = false), 3000);
+  } finally {
+    sharing.value = false;
+  }
+}
+
+async function copyLink(url: string) {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.type = 'success';
+    toast.message = 'Link copied';
+    toast.show = true;
+    window.setTimeout(() => (toast.show = false), 2000);
+  } catch {}
+}
+
+async function copyAllLinks() {
+  const text = shareLinks.value.map((l) => l.url).join('\n');
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.type = 'success';
+    toast.message = 'All links copied';
+    toast.show = true;
+    window.setTimeout(() => (toast.show = false), 2000);
+  } catch {}
+}
 </script>
 
 <template>
@@ -112,10 +293,13 @@ async function deleteAccountable(accountable: string) {
           <p class="text-sm text-muted-foreground">Browse accountables and export per group. Manage items in each accountable’s page.</p>
         </div>
         <div class="flex items-center gap-2">
-          <Badge variant="secondary">Groups: {{ groups.length }}</Badge>
+          <Badge variant="secondary">Groups: {{ pagination.total }}</Badge>
           <Badge variant="outline">Items: {{ totalItems }}</Badge>
         </div>
         <div class="flex items-center gap-2">
+          <Link href="/inventories/share-logs">
+            <Button class="w-full sm:w-auto" variant="outline">Share Access Logs</Button>
+          </Link>
           <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel()"><FileSpreadsheet class="size-4" /> Export All Excel</Button>
           <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf()"><FileText class="size-4" /> Export All PDF</Button>
         </div>
@@ -174,7 +358,7 @@ async function deleteAccountable(accountable: string) {
           <div class="mb-3">
             <div class="relative">
               <Search class="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input class="pl-8 w-full" v-model="search" placeholder="Search by accountable" @input="fetchGroups" />
+              <Input class="pl-8 w-full" v-model="search" placeholder="Search by accountable" @input="onSearchInput" />
             </div>
           </div>
 
@@ -182,6 +366,9 @@ async function deleteAccountable(accountable: string) {
             <Card v-for="group in filteredGroups" :key="group.inventory_accountable" class="overflow-hidden">
               <CardHeader class="border-b bg-muted/30">
                 <CardTitle class="text-base sm:text-lg text-start">{{ group.inventory_accountable }}</CardTitle>
+                <div data-slot="card-action" class="flex items-center">
+                  <Checkbox :checked="isSelected(group.inventory_accountable)" @update:checked="onCardSelect(group.inventory_accountable, $event)" />
+                </div>
               </CardHeader>
               <CardContent class="py-4">
                 <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-start">
@@ -250,6 +437,20 @@ async function deleteAccountable(accountable: string) {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+
+                <TooltipProvider :delay-duration="0">
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button variant="ghost" size="icon" class="h-9 w-9" @click="openShare(group.inventory_accountable)">
+                        <LinkIcon class="size-4" />
+                        <span class="sr-only">Share</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Share</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </CardFooter>
             </Card>
           </div>
@@ -258,8 +459,74 @@ async function deleteAccountable(accountable: string) {
             <div class="text-sm text-muted-foreground mt-1">Try adjusting your search or refresh the list.</div>
             <Button class="mt-4" variant="secondary" @click="fetchGroups"><RefreshCw class="size-4" /> Refresh</Button>
           </div>
+          <div v-if="filteredGroups.length" class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-muted-foreground">Per page</span>
+              <select v-model.number="perPage" @change="onPerPageChange"
+                class="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-28 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
+                <option :value="10">10</option>
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" :disabled="page <= 1" @click="prevPage">Previous</Button>
+              <template v-for="item in pages" :key="item.type === 'page' ? 'p-' + item.value + '-' + page : 'e-' + page">
+                <Button v-if="item.type === 'page'" size="sm" :variant="item.value === page ? 'secondary' : 'outline'" @click="goToPage(item.value)">{{ item.value }}</Button>
+                <span v-else class="text-muted-foreground px-2">…</span>
+              </template>
+              <Button variant="outline" size="sm" :disabled="page >= pagination.last_page" @click="nextPage">Next</Button>
+              <Button size="sm" class="ml-2" @click="openShare('')">Share</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      <Dialog :open="shareOpen" @update:open="shareOpen = $event">
+        <DialogContent class="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Share IT Inventories</DialogTitle>
+            <DialogDescription>Generate read-only links</DialogDescription>
+          </DialogHeader>
+          <div class="grid gap-3">
+            <div class="grid grid-cols-3 gap-2">
+              <Button :variant="shareScope === 'single' ? 'secondary' : 'outline'" @click="shareScope = 'single'">This accountable</Button>
+              <Button :variant="shareScope === 'selected' ? 'secondary' : 'outline'" @click="shareScope = 'selected'">Selected accountables</Button>
+              <Button :variant="shareScope === 'all' ? 'secondary' : 'outline'" @click="shareScope = 'all'">All accountables</Button>
+            </div>
+            <div class="text-xs text-muted-foreground">Selected: {{ selectedAccountables.length }}</div>
+            <div class="grid grid-cols-2 gap-2">
+              <Button :variant="shareAccessType === 'anyone' ? 'secondary' : 'outline'" @click="shareAccessType = 'anyone'">Anyone with link</Button>
+              <Button :variant="shareAccessType === 'emails' ? 'secondary' : 'outline'" @click="shareAccessType = 'emails'">Specific emails</Button>
+            </div>
+            <div v-if="shareAccessType === 'emails'" class="grid gap-2">
+              <label class="text-sm text-muted-foreground">Emails (comma-separated)</label>
+              <Input v-model="shareEmailsInput" placeholder="name@example.com, other@example.com" />
+            </div>
+            <div class="grid gap-2">
+              <label class="text-sm text-muted-foreground">Expires in days (optional)</label>
+              <Input v-model.number="shareExpireDays" type="number" min="1" max="365" />
+            </div>
+            <div class="flex items-center justify-end gap-2">
+              <Button variant="outline" @click="shareOpen = false">Close</Button>
+              <Button :disabled="sharing" @click="createShare">Generate</Button>
+            </div>
+            <div v-if="shareLinks.length" class="grid gap-2">
+              <div class="text-sm font-medium">Links</div>
+              <div class="grid gap-2">
+                <div v-for="l in shareLinks" :key="l.id" class="flex items-center justify-between gap-2">
+                  <div class="text-xs break-all">{{ l.url }}</div>
+                  <Button size="sm" variant="outline" @click="copyLink(l.url)">Copy</Button>
+                </div>
+              </div>
+              <div class="flex items-center justify-end">
+                <Button size="sm" variant="secondary" @click="copyAllLinks">Copy All</Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
 </template>

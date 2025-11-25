@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
+use App\Models\InventoryShare;
+use App\Models\InventoryShareAccess;
 
 class InventoryController extends Controller
 {
@@ -30,30 +33,69 @@ class InventoryController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Inventory::query();
+        $search = (string) $request->get('search', '');
+        $status = (string) $request->get('status', '');
+        $perPage = (int) $request->get('perPage', 10);
+        $page = (int) $request->get('page', 1);
+        $allowed = [10, 25, 50, 100];
+        if (!in_array($perPage, $allowed, true)) {
+            $perPage = 10;
+        }
 
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
+        $base = Inventory::query();
+        if ($search !== '') {
+            $base->where(function ($q) use ($search) {
                 $q->where('inventory_accountable', 'like', "%{$search}%")
                     ->orWhere('inventory_name', 'like', "%{$search}%")
                     ->orWhere('inventory_brand', 'like', "%{$search}%");
             });
         }
-
-        if ($status = $request->get('status')) {
-            $query->where('inventory_status', $status);
+        if ($status !== '') {
+            $base->where('inventory_status', $status);
         }
 
-        $items = $query->orderBy('inventory_accountable')->orderBy('inventory_name')->get();
+        $accountables = $base->clone()
+            ->select('inventory_accountable')
+            ->distinct()
+            ->orderBy('inventory_accountable')
+            ->paginate($perPage, ['*'], 'page', $page);
 
-        $grouped = $items->groupBy('inventory_accountable')->map(function ($group, $accountable) {
-            return [
-                'inventory_accountable' => $accountable,
-                'items' => $group->values(),
+        $groups = [];
+        foreach ($accountables->items() as $row) {
+            $acc = is_array($row) ? ($row['inventory_accountable'] ?? '') : ($row->inventory_accountable ?? '');
+            if ($acc === '') { continue; }
+
+            $itemsQ = Inventory::query()->where('inventory_accountable', $acc);
+            if ($search !== '') {
+                $itemsQ->where(function ($q) use ($search) {
+                    $q->where('inventory_name', 'like', "%{$search}%")
+                        ->orWhere('inventory_brand', 'like', "%{$search}%");
+                });
+            }
+            if ($status !== '') {
+                $itemsQ->where('inventory_status', $status);
+            }
+
+            $total = (clone $itemsQ)->count();
+            $preview = $itemsQ->orderBy('inventory_name')->limit(3)->get(['inventory_name']);
+
+            $groups[] = [
+                'inventory_accountable' => (string) $acc,
+                'items' => $preview->values(),
+                'total' => (int) $total,
             ];
-        })->values();
+        }
 
-        return response()->json(['success' => true, 'data' => $grouped]);
+        return response()->json([
+            'success' => true,
+            'data' => $groups,
+            'pagination' => [
+                'current_page' => $accountables->currentPage(),
+                'last_page' => $accountables->lastPage(),
+                'per_page' => $accountables->perPage(),
+                'total' => $accountables->total(),
+            ],
+        ]);
     }
 
     public function byAccountable(string $accountable, Request $request): JsonResponse
@@ -308,5 +350,282 @@ class InventoryController extends Controller
         ]);
         $ts = now()->format('Ymd_His');
         return $pdf->download("it-inventories_all_{$ts}.pdf");
+    }
+
+    public function createShare(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'mode' => ['nullable', 'string', 'in:single,multiple,all'],
+            'accountable' => ['nullable', 'string', 'max:255'],
+            'accountables' => ['nullable', 'array'],
+            'accountables.*' => ['string', 'max:255'],
+            'accessType' => ['required', 'string', 'in:anyone,emails'],
+            'emails' => ['nullable', 'array'],
+            'emails.*' => ['string', 'email'],
+            'expiresInDays' => ['nullable', 'integer', 'min:1', 'max:365'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+        $validated = $validator->validated();
+        $mode = $validated['mode'] ?? (isset($validated['accountable']) ? 'single' : null);
+        if (!$mode) {
+            return response()->json(['success' => false, 'errors' => ['mode or accountable is required']], 422);
+        }
+        $expiresAt = null;
+        if (!empty($validated['expiresInDays'])) {
+            $expiresAt = now()->addDays((int) $validated['expiresInDays']);
+        }
+        $links = [];
+        if ($mode === 'single') {
+            $accountable = (string) $validated['accountable'];
+            $exists = Inventory::where('inventory_accountable', $accountable)->exists();
+            if (!$exists) {
+                return response()->json(['success' => false, 'errors' => ['Accountable not found']], 404);
+            }
+            if ($validated['accessType'] === 'anyone') {
+                $token = Str::random(48);
+                $share = InventoryShare::create([
+                    'inventory_accountable' => $accountable,
+                    'scope' => 'single',
+                    'accountable_list' => null,
+                    'token' => $token,
+                    'access_type' => 'anyone',
+                    'allowed_emails' => null,
+                    'expires_at' => $expiresAt,
+                    'created_by' => auth()->id(),
+                ]);
+                $links[] = [
+                    'id' => $share->id,
+                    'url' => url("/inventories/share/{$share->token}"),
+                ];
+            } else {
+                $emails = array_values(array_filter(array_map(function ($e) {
+                    return is_string($e) ? strtolower(trim($e)) : null;
+                }, $validated['emails'] ?? [])));
+                if (empty($emails)) {
+                    return response()->json(['success' => false, 'errors' => ['Emails are required']], 422);
+                }
+                foreach ($emails as $email) {
+                    $token = Str::random(48);
+                    $share = InventoryShare::create([
+                        'inventory_accountable' => $accountable,
+                        'scope' => 'single',
+                        'accountable_list' => null,
+                        'token' => $token,
+                        'access_type' => 'emails',
+                        'allowed_emails' => [$email],
+                        'expires_at' => $expiresAt,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $links[] = [
+                        'id' => $share->id,
+                        'email' => $email,
+                        'url' => url("/inventories/share/{$share->token}?email=" . urlencode($email)),
+                    ];
+                }
+            }
+        } elseif ($mode === 'multiple') {
+            $accountables = array_values(array_filter(array_map(function ($e) {
+                return is_string($e) ? trim($e) : null;
+            }, $validated['accountables'] ?? [])));
+            if (empty($accountables)) {
+                return response()->json(['success' => false, 'errors' => ['accountables are required']], 422);
+            }
+            // Filter to existing accountables
+            $existing = Inventory::query()->whereIn('inventory_accountable', $accountables)->select('inventory_accountable')->distinct()->pluck('inventory_accountable')->all();
+            if (empty($existing)) {
+                return response()->json(['success' => false, 'errors' => ['No valid accountables found']], 404);
+            }
+            if ($validated['accessType'] === 'anyone') {
+                $token = Str::random(48);
+                $share = InventoryShare::create([
+                    'inventory_accountable' => '__MULTI__',
+                    'scope' => 'multiple',
+                    'accountable_list' => $existing,
+                    'token' => $token,
+                    'access_type' => 'anyone',
+                    'allowed_emails' => null,
+                    'expires_at' => $expiresAt,
+                    'created_by' => auth()->id(),
+                ]);
+                $links[] = [
+                    'id' => $share->id,
+                    'url' => url("/inventories/share/{$share->token}"),
+                ];
+            } else {
+                $emails = array_values(array_filter(array_map(function ($e) {
+                    return is_string($e) ? strtolower(trim($e)) : null;
+                }, $validated['emails'] ?? [])));
+                if (empty($emails)) {
+                    return response()->json(['success' => false, 'errors' => ['Emails are required']], 422);
+                }
+                foreach ($emails as $email) {
+                    $token = Str::random(48);
+                    $share = InventoryShare::create([
+                        'inventory_accountable' => '__MULTI__',
+                        'scope' => 'multiple',
+                        'accountable_list' => $existing,
+                        'token' => $token,
+                        'access_type' => 'emails',
+                        'allowed_emails' => [$email],
+                        'expires_at' => $expiresAt,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $links[] = [
+                        'id' => $share->id,
+                        'email' => $email,
+                        'url' => url("/inventories/share/{$share->token}?email=" . urlencode($email)),
+                    ];
+                }
+            }
+        } elseif ($mode === 'all') {
+            if ($validated['accessType'] === 'anyone') {
+                $token = Str::random(48);
+                $share = InventoryShare::create([
+                    'inventory_accountable' => '__ALL__',
+                    'scope' => 'all',
+                    'accountable_list' => null,
+                    'token' => $token,
+                    'access_type' => 'anyone',
+                    'allowed_emails' => null,
+                    'expires_at' => $expiresAt,
+                    'created_by' => auth()->id(),
+                ]);
+                $links[] = [
+                    'id' => $share->id,
+                    'url' => url("/inventories/share/{$share->token}"),
+                ];
+            } else {
+                $emails = array_values(array_filter(array_map(function ($e) {
+                    return is_string($e) ? strtolower(trim($e)) : null;
+                }, $validated['emails'] ?? [])));
+                if (empty($emails)) {
+                    return response()->json(['success' => false, 'errors' => ['Emails are required']], 422);
+                }
+                foreach ($emails as $email) {
+                    $token = Str::random(48);
+                    $share = InventoryShare::create([
+                        'inventory_accountable' => '__ALL__',
+                        'scope' => 'all',
+                        'accountable_list' => null,
+                        'token' => $token,
+                        'access_type' => 'emails',
+                        'allowed_emails' => [$email],
+                        'expires_at' => $expiresAt,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $links[] = [
+                        'id' => $share->id,
+                        'email' => $email,
+                        'url' => url("/inventories/share/{$share->token}?email=" . urlencode($email)),
+                    ];
+                }
+            }
+        }
+        return response()->json(['success' => true, 'links' => $links]);
+    }
+
+    public function revokeShare(InventoryShare $share): JsonResponse
+    {
+        $share->revoked_at = now();
+        $share->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function shareAccesses(InventoryShare $share): JsonResponse
+    {
+        $logs = $share->accesses()->orderByDesc('id')->limit(50)->get();
+        return response()->json(['success' => true, 'data' => $logs]);
+    }
+
+    public function shareLogsPage()
+    {
+        $logs = InventoryShareAccess::with('share')->orderByDesc('id')->limit(200)->get();
+        return response()->view('inventories.share_logs', [
+            'logs' => $logs,
+        ]);
+    }
+
+    public function viewShare(string $token, Request $request)
+    {
+        $share = InventoryShare::where('token', $token)->first();
+        $emailParam = $request->query('email');
+        $ip = $request->ip();
+        $ua = $request->header('User-Agent');
+        if (!$share) {
+            abort(404);
+        }
+        if ($share->revoked_at) {
+            InventoryShareAccess::create([
+                'inventory_share_id' => $share->id,
+                'email' => is_string($emailParam) ? $emailParam : null,
+                'ip' => $ip,
+                'user_agent' => $ua,
+                'success' => false,
+            ]);
+            abort(410);
+        }
+        if ($share->expires_at && now()->greaterThan($share->expires_at)) {
+            InventoryShareAccess::create([
+                'inventory_share_id' => $share->id,
+                'email' => is_string($emailParam) ? $emailParam : null,
+                'ip' => $ip,
+                'user_agent' => $ua,
+                'success' => false,
+            ]);
+            abort(410);
+        }
+        if ($share->access_type === 'emails') {
+            $allowed = collect($share->allowed_emails ?? [])->map(function ($e) { return is_string($e) ? strtolower($e) : $e; })->filter()->values()->all();
+            $email = is_string($emailParam) ? strtolower($emailParam) : null;
+            if (!$email || !in_array($email, $allowed, true)) {
+                InventoryShareAccess::create([
+                    'inventory_share_id' => $share->id,
+                    'email' => $email,
+                    'ip' => $ip,
+                    'user_agent' => $ua,
+                    'success' => false,
+                ]);
+                abort(403);
+            }
+        }
+        $groups = [];
+        if ($share->scope === 'single') {
+            $items = Inventory::where('inventory_accountable', $share->inventory_accountable)->orderBy('inventory_name')->get();
+            $groups[] = [
+                'accountable' => $share->inventory_accountable,
+                'items' => $items,
+            ];
+        } elseif ($share->scope === 'multiple') {
+            $list = collect($share->accountable_list ?? [])->filter()->values()->all();
+            foreach ($list as $acc) {
+                $items = Inventory::where('inventory_accountable', $acc)->orderBy('inventory_name')->get();
+                $groups[] = [
+                    'accountable' => $acc,
+                    'items' => $items,
+                ];
+            }
+        } else { // all
+            $items = Inventory::orderBy('inventory_accountable')->orderBy('inventory_name')->get();
+            foreach ($items->groupBy('inventory_accountable') as $acc => $coll) {
+                $groups[] = [
+                    'accountable' => (string) $acc,
+                    'items' => $coll,
+                ];
+            }
+        }
+        InventoryShareAccess::create([
+            'inventory_share_id' => $share->id,
+            'email' => is_string($emailParam) ? strtolower($emailParam) : null,
+            'ip' => $ip,
+            'user_agent' => $ua,
+            'success' => true,
+        ]);
+        return response()->view('inventories.share', [
+            'scope' => $share->scope,
+            'groups' => $groups,
+        ]);
     }
 }
