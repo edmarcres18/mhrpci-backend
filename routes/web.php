@@ -6,8 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ItInventoryController;
 use App\Http\Middleware\EnsureUserHasAdminPrivileges;
 use App\Http\Middleware\EnsureUserIsSystemAdmin;
 
@@ -45,11 +45,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // User Management (Admin and System Admin only)
     Route::resource('users', UserController::class);
 
-    // IT Inventories Management (Admin and System Admin only)
-    // Place custom routes BEFORE the resource to avoid shadowing by {it_inventory}
-    Route::get('it-inventories/batch-create', [ItInventoryController::class, 'createBatch'])->name('it-inventories.batch-create');
-    Route::post('it-inventories/batch-store', [ItInventoryController::class, 'storeBatch'])->name('it-inventories.batch-store');
-    Route::resource('it-inventories', ItInventoryController::class);
     
     // User invitation routes
     Route::get('users-invite', [UserController::class, 'inviteForm'])->name('users.invite.form');
@@ -80,6 +75,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.delete');
         Route::post('database-backup/restore', [DatabaseBackupController::class, 'restore'])->name('database-backup.restore');
         Route::post('database-backup/upload-restore', [DatabaseBackupController::class, 'uploadAndRestore'])->name('database-backup.upload-restore');
+    });
+
+    // Inventories Page
+    Route::get('inventories', [InventoryController::class, 'page'])->name('inventories.page');
+    Route::get('inventories/{accountable}', [InventoryController::class, 'showPage'])->name('inventories.show');
+
+    // Inventories API
+    Route::prefix('api/inventories')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('api.inventories.index');
+        Route::get('/by-accountable/{accountable}', [InventoryController::class, 'byAccountable'])->name('api.inventories.by-accountable');
+
+        Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
+            Route::post('/', [InventoryController::class, 'store'])->name('api.inventories.store');
+            Route::post('/batch', [InventoryController::class, 'batchStore'])->name('api.inventories.batch');
+            Route::put('/{inventory}', [InventoryController::class, 'update'])->name('api.inventories.update');
+            Route::delete('/{inventory}', [InventoryController::class, 'destroy'])->name('api.inventories.destroy');
+            Route::post('/import-excel', [InventoryController::class, 'importExcel'])->name('api.inventories.import-excel');
+        });
+
+        Route::get('/export-excel', [InventoryController::class, 'exportExcel'])->name('api.inventories.export-excel');
+        Route::get('/export-pdf/{accountable}', [InventoryController::class, 'exportPdf'])->name('api.inventories.export-pdf');
     });
 });
 

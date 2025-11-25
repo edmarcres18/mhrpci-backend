@@ -44,6 +44,11 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     href: '/users',
                     icon: Users,
                 },
+                {
+                    title: 'IT Inventories',
+                    href: '/inventories',
+                    icon: Database,
+                },
             ],
         });
     }
@@ -57,11 +62,6 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     title: 'Contact Information',
                     href: '/site-information',
                     icon: Info,
-                },
-                {
-                    title: 'IT Inventories',
-                    href: '/it-inventories',
-                    icon: Database,
                 },
             ],
         });
@@ -120,4 +120,3 @@ const footerNavGroups = computed<NavGroup[]>(() => {
     </Sidebar>
     <slot />
 </template>
-
