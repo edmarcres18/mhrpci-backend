@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2 } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle } from 'lucide-vue-next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from '@inertiajs/vue3';
 
@@ -70,12 +70,10 @@ function exportPdf(accountable?: string) {
   window.location.href = url;
 }
 
-function namesPreview(group: InventoryGroup) {
-  const names = group.items.map((i) => i.inventory_name);
-  const max = 8;
-  if (names.length <= max) return names.join(', ');
-  const more = names.length - max;
-  return `${names.slice(0, max).join(', ')} +${more} more`;
+function namesWithCount(group: InventoryGroup) {
+  const names = group.items.map((i) => i.inventory_name).slice(0, 3);
+  const remaining = Math.max(group.items.length - 3, 0);
+  return { names, remaining };
 }
 
 const filteredGroups = computed(() => groups.value);
@@ -184,7 +182,15 @@ async function deleteAccountable(accountable: string) {
             <Card v-for="group in filteredGroups" :key="group.inventory_accountable" class="overflow-hidden">
               <CardHeader class="border-b bg-muted/30">
                 <CardTitle class="text-base sm:text-lg">{{ group.inventory_accountable }}</CardTitle>
-                <CardDescription class="text-xs text-muted-foreground">{{ namesPreview(group) }}</CardDescription>
+                <CardDescription class="text-xs text-muted-foreground">
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="name in namesWithCount(group).names" :key="name" class="inline-flex items-center gap-1">
+                      <CheckCircle class="h-3.5 w-3.5 text-green-600" />
+                      <span class="truncate">{{ name }}</span>
+                    </span>
+                    <span v-if="namesWithCount(group).remaining > 0" class="text-xs">+{{ namesWithCount(group).remaining }} more</span>
+                  </div>
+                </CardDescription>
               </CardHeader>
               <CardFooter class="p-4 flex flex-row flex-wrap gap-2">
                 <TooltipProvider :delay-duration="0">

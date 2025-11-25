@@ -211,9 +211,9 @@ class InventoryController extends Controller
     public function exportExcel(Request $request)
     {
         $accountable = $request->get('accountable');
-        $ts = now()->format('Ymd_His');
-        $safeAcc = $accountable ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $accountable) : null;
-        $fileName = $safeAcc ? "it-inventories_{$safeAcc}_{$ts}.xlsx" : "it-inventories_all_{$ts}.xlsx";
+        $year = now()->format('Y');
+        $createdAt = now()->format('Y-m-d_His');
+        $fileName = "IT INVENTORIES_{$year}_{$createdAt}.xlsx";
         return Excel::download(new InventoriesExport($accountable), $fileName);
     }
 

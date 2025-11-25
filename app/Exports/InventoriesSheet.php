@@ -9,14 +9,14 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithEvents, WithStyles, WithColumnWidths
+class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithEvents, WithStyles, ShouldAutoSize
 {
     protected string $accountable;
 
@@ -42,15 +42,7 @@ class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithE
         return $this->accountable;
     }
 
-    public function columnWidths(): array
-    {
-        return [
-            'A' => 28,
-            'B' => 36,
-            'C' => 22,
-            'D' => 14,
-        ];
-    }
+    // Columns will auto-size to content via ShouldAutoSize
 
     public function styles(Worksheet $sheet)
     {
@@ -105,10 +97,11 @@ class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithE
                         ],
                         'alignment' => [
                             'vertical' => Alignment::VERTICAL_TOP,
+                            'horizontal' => Alignment::HORIZONTAL_LEFT,
                         ],
                     ]);
                     
-                    $sheet->getStyle("B2:B{$highestRow}")->getAlignment()->setWrapText(true);
+                    $sheet->getStyle("A2:D{$highestRow}")->getAlignment()->setWrapText(true);
 
                     for ($row = 2; $row <= $highestRow; $row++) {
                         if ($row % 2 === 0) {
@@ -121,6 +114,10 @@ class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithE
                             'outline' => [
                                 'borderStyle' => Border::BORDER_MEDIUM,
                                 'color' => ['argb' => 'FFD1D5DB'],
+                            ],
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['argb' => 'FFE5E7EB'],
                             ],
                         ],
                     ]);
