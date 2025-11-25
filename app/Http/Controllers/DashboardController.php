@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invitation;
+use App\Models\Inventory;
 use App\Models\User;
 use App\UserRole;
 use Carbon\Carbon;
@@ -341,6 +342,110 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to clear cache',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get real-time inventories activity summary and recent changes.
+     */
+    public function getInventoriesActivity(): JsonResponse
+    {
+        try {
+            $now = Carbon::now();
+            $last24h = $now->copy()->subDay();
+
+            $addedLast24h = Inventory::where('created_at', '>=', $last24h)->count();
+            $updatedLast24h = Inventory::where('updated_at', '>=', $last24h)
+                ->whereColumn('updated_at', '!=', 'created_at')
+                ->count();
+
+            $deletedEvents = Cache::get('inventories_deleted_events', []);
+            $deletedLast24h = 0;
+            $recentDeletions = [];
+            foreach ($deletedEvents as $ev) {
+                try {
+                    $ts = Carbon::parse($ev['timestamp']);
+                } catch (\Throwable $e) {
+                    continue;
+                }
+                if ($ts->gte($last24h)) {
+                    $deletedLast24h += (int) ($ev['count'] ?? 1);
+                }
+                $recentDeletions[] = [
+                    'accountable' => (string) ($ev['accountable'] ?? ''),
+                    'count' => (int) ($ev['count'] ?? 1),
+                    'item' => $ev['item'] ?? null,
+                    'deleted_at' => $ts->toDateTimeString(),
+                    'deleted_at_full' => $ts->toDateTimeString(),
+                    'timestamp' => $ts->getTimestamp(),
+                ];
+            }
+
+            usort($recentDeletions, function ($a, $b) {
+                return ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0);
+            });
+            $recentDeletions = array_slice($recentDeletions, 0, 10);
+
+            $recentChangesItems = Inventory::orderByDesc('updated_at')
+                ->limit(10)
+                ->get()
+                ->map(function ($it) {
+                    $event = ($it->updated_at && $it->created_at && $it->updated_at->eq($it->created_at)) ? 'created' : 'updated';
+                    return [
+                        'id' => (int) $it->id,
+                        'inventory_accountable' => (string) $it->inventory_accountable,
+                        'inventory_name' => (string) $it->inventory_name,
+                        'inventory_status' => (string) $it->inventory_status,
+                        'event' => $event,
+                        'updated_at' => optional($it->updated_at)->toDateTimeString(),
+                        'updated_at_full' => optional($it->updated_at)->toDateTimeString(),
+                        'timestamp' => optional($it->updated_at)->getTimestamp(),
+                    ];
+                });
+
+            $latestUpdate = Inventory::max('updated_at');
+            $latestDeletionTs = null;
+            foreach ($deletedEvents as $ev) {
+                try {
+                    $ts = Carbon::parse($ev['timestamp']);
+                    if (!$latestDeletionTs || $ts->gt($latestDeletionTs)) {
+                        $latestDeletionTs = $ts;
+                    }
+                } catch (\Throwable $e) {
+                    continue;
+                }
+            }
+
+            $lastChangeAt = null;
+            if ($latestUpdate && $latestDeletionTs) {
+                $lastChangeAt = Carbon::parse($latestUpdate)->gt($latestDeletionTs)
+                    ? Carbon::parse($latestUpdate)->toDateTimeString()
+                    : $latestDeletionTs->toDateTimeString();
+            } elseif ($latestUpdate) {
+                $lastChangeAt = Carbon::parse($latestUpdate)->toDateTimeString();
+            } elseif ($latestDeletionTs) {
+                $lastChangeAt = $latestDeletionTs->toDateTimeString();
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'summary' => [
+                        'added_last_24h' => (int) $addedLast24h,
+                        'updated_last_24h' => (int) $updatedLast24h,
+                        'deleted_last_24h' => (int) $deletedLast24h,
+                        'last_change_at' => $lastChangeAt,
+                    ],
+                    'recent_changes' => $recentChangesItems,
+                    'recent_deletions' => $recentDeletions,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Dashboard Inventories Activity Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch inventories activity',
             ], 500);
         }
     }

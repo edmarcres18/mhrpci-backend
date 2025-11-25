@@ -11,6 +11,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 
 class InventoryController extends Controller
 {
@@ -151,7 +153,58 @@ class InventoryController extends Controller
 
     public function destroy(Inventory $inventory): JsonResponse
     {
+        try {
+            $events = Cache::get('inventories_deleted_events', []);
+            $events[] = [
+                'type' => 'single',
+                'accountable' => $inventory->inventory_accountable,
+                'count' => 1,
+                'item' => [
+                    'id' => $inventory->id,
+                    'inventory_name' => $inventory->inventory_name,
+                ],
+                'timestamp' => now()->toDateTimeString(),
+            ];
+            $events = array_values(array_filter($events, function ($e) {
+                try {
+                    return Carbon::parse($e['timestamp'])->gte(now()->subDays(7));
+                } catch (\Throwable $ex) {
+                    return false;
+                }
+            }));
+            Cache::forever('inventories_deleted_events', $events);
+        } catch (\Throwable $e) {
+            // swallow cache errors
+        }
+
         $inventory->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function destroyAccountable(string $accountable): JsonResponse
+    {
+        $count = Inventory::where('inventory_accountable', $accountable)->count();
+        Inventory::where('inventory_accountable', $accountable)->delete();
+
+        try {
+            $events = Cache::get('inventories_deleted_events', []);
+            $events[] = [
+                'type' => 'group',
+                'accountable' => $accountable,
+                'count' => (int) $count,
+                'timestamp' => now()->toDateTimeString(),
+            ];
+            $events = array_values(array_filter($events, function ($e) {
+                try {
+                    return Carbon::parse($e['timestamp'])->gte(now()->subDays(7));
+                } catch (\Throwable $ex) {
+                    return false;
+                }
+            }));
+            Cache::forever('inventories_deleted_events', $events);
+        } catch (\Throwable $e) {
+            // swallow cache errors
+        }
         return response()->json(['success' => true]);
     }
 

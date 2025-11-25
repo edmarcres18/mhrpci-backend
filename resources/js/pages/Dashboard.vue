@@ -22,6 +22,9 @@ import {
     AlertCircle,
     Database,
     HardDrive,
+    ListPlus,
+    PencilLine,
+    Trash2,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -44,10 +47,14 @@ const {
     refresh,
     startAutoRefresh,
     stopAutoRefresh,
+    inventoriesActivity,
+    startInventoriesRealtime,
 } = useDashboard();
 
 // Start auto-refresh every 60 seconds
 startAutoRefresh(60000);
+// Start real-time inventories activity polling every 5 seconds
+startInventoriesRealtime(5000);
 
 const isRefreshing = computed(() => isLoading.value);
 
@@ -248,6 +255,114 @@ const getStatusIcon = (status: string) => {
                         </CardContent>
                     </Card>
                 </div>
+
+                <!-- Inventories Activity -->
+                <Card>
+                    <CardHeader class="pb-3 sm:pb-6">
+                        <CardTitle class="text-lg sm:text-xl">Inventories Activity</CardTitle>
+                        <CardDescription class="text-xs sm:text-sm">
+                            Real-time monitor of added, updated, and deleted inventory items
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="grid gap-3 grid-cols-1 sm:grid-cols-3 sm:gap-4">
+                            <div class="rounded-lg border p-4">
+                                <div class="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                    <ListPlus class="h-4 w-4 text-green-600" />
+                                    <span>Added (24h)</span>
+                                </div>
+                                <div class="mt-2 text-2xl sm:text-3xl font-bold">
+                                    {{ inventoriesActivity?.summary.added_last_24h || 0 }}
+                                </div>
+                            </div>
+                            <div class="rounded-lg border p-4">
+                                <div class="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                    <PencilLine class="h-4 w-4 text-blue-600" />
+                                    <span>Updated (24h)</span>
+                                </div>
+                                <div class="mt-2 text-2xl sm:text-3xl font-bold">
+                                    {{ inventoriesActivity?.summary.updated_last_24h || 0 }}
+                                </div>
+                            </div>
+                            <div class="rounded-lg border p-4">
+                                <div class="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                    <Trash2 class="h-4 w-4 text-red-600" />
+                                    <span>Deleted (24h)</span>
+                                </div>
+                                <div class="mt-2 text-2xl sm:text-3xl font-bold">
+                                    {{ inventoriesActivity?.summary.deleted_last_24h || 0 }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 grid gap-4 sm:gap-5 md:gap-6 lg:grid-cols-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="text-sm font-semibold">Recent Changes</div>
+                                    <div class="text-xs text-muted-foreground">
+                                        Last change: {{ inventoriesActivity?.summary.last_change_at || '—' }}
+                                    </div>
+                                </div>
+                                <div class="space-y-3 sm:space-y-4">
+                                    <div
+                                        v-for="item in inventoriesActivity?.recent_changes || []"
+                                        :key="item.id"
+                                        class="flex items-start gap-3 border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                                    >
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium leading-none truncate" :title="item.inventory_name">
+                                                {{ item.inventory_name }}
+                                            </p>
+                                            <p class="text-xs text-muted-foreground truncate" :title="item.inventory_accountable">
+                                                {{ item.inventory_accountable }} • {{ item.updated_at }}
+                                            </p>
+                                        </div>
+                                        <Badge :variant="item.event === 'created' ? 'secondary' : 'outline'" class="text-xs whitespace-nowrap">
+                                            <component :is="item.event === 'created' ? ListPlus : PencilLine" class="mr-1 h-3 w-3" />
+                                            {{ item.event }}
+                                        </Badge>
+                                    </div>
+                                    <div
+                                        v-if="!inventoriesActivity || (inventoriesActivity.recent_changes || []).length === 0"
+                                        class="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground"
+                                    >
+                                        No recent changes
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-sm font-semibold mb-2">Recent Deletions</div>
+                                <div class="space-y-3 sm:space-y-4">
+                                    <div
+                                        v-for="del in inventoriesActivity?.recent_deletions || []"
+                                        :key="del.timestamp"
+                                        class="flex items-start gap-3 border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                                    >
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium leading-none truncate" :title="del.accountable">
+                                                {{ del.accountable }}
+                                            </p>
+                                            <p class="text-xs text-muted-foreground truncate">
+                                                {{ del.deleted_at }}
+                                            </p>
+                                        </div>
+                                        <Badge variant="destructive" class="text-xs whitespace-nowrap">
+                                            <Trash2 class="mr-1 h-3 w-3" />
+                                            {{ del.count }} deleted
+                                        </Badge>
+                                    </div>
+                                    <div
+                                        v-if="!inventoriesActivity || (inventoriesActivity.recent_deletions || []).length === 0"
+                                        class="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground"
+                                    >
+                                        No recent deletions
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <!-- Recent Activity Section -->
                 <div class="grid gap-4 sm:gap-5 md:gap-6 lg:grid-cols-3">

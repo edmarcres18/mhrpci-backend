@@ -70,6 +70,27 @@ function exportPdf(accountable: string) {
 }
 
 const filteredGroups = computed(() => groups.value);
+
+async function deleteAccountable(accountable: string) {
+  if (!accountable) return;
+  const ok = window.confirm(`Delete all items under "${accountable}"?`);
+  if (!ok) return;
+  try {
+    const res = await axios.delete(`/api/inventories/by-accountable/${encodeURIComponent(accountable)}`);
+    if (res.data?.success) {
+      toast.type = 'success';
+      toast.message = 'Accountable deleted';
+      toast.show = true;
+      window.setTimeout(() => (toast.show = false), 3000);
+      await fetchGroups();
+    }
+  } catch (e: any) {
+    toast.type = 'error';
+    toast.message = e?.response?.data?.errors?.[0] || 'Delete failed';
+    toast.show = true;
+    window.setTimeout(() => (toast.show = false), 3000);
+  }
+}
 </script>
 
 <template>
@@ -90,17 +111,17 @@ const filteredGroups = computed(() => groups.value);
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Quick Create Accountable</CardTitle>
-          <CardDescription>Enter a new accountable name to start managing its items.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <Input v-model="newAccountable" placeholder="e.g., IT Department" />
-            <Button class="w-full sm:w-auto" @click="goCreateAccountable">Create</Button>
-          </div>
-        </CardContent>
-      </Card>
+          <CardHeader>
+            <CardTitle>Quick Create Accountable</CardTitle>
+            <CardDescription>Enter a new accountable name to start managing its items.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <Input v-model="newAccountable" placeholder="e.g., IT Department" :aria-invalid="!newAccountable || !newAccountable.trim()" />
+              <Button class="w-full sm:w-auto" @click="goCreateAccountable" :disabled="!newAccountable || !newAccountable.trim()">Create</Button>
+            </div>
+          </CardContent>
+        </Card>
 
       <Card>
         <CardHeader>
@@ -160,6 +181,7 @@ const filteredGroups = computed(() => groups.value);
                 </Link>
                 <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel(group.inventory_accountable)"><FileSpreadsheet class="size-4" /> Excel</Button>
                 <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf(group.inventory_accountable)"><FileText class="size-4" /> PDF</Button>
+                <Button class="w-full sm:w-auto" variant="destructive" @click="deleteAccountable(group.inventory_accountable)">Delete</Button>
               </CardFooter>
             </Card>
           </div>

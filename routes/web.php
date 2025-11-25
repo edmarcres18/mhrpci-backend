@@ -40,6 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/clear-cache', [DashboardController::class, 'clearCache'])
             ->middleware(EnsureUserIsSystemAdmin::class)
             ->name('api.dashboard.clear-cache');
+
+        Route::get('/inventories-activity', [DashboardController::class, 'getInventoriesActivity'])
+            ->name('api.dashboard.inventories-activity');
     });
     
     // User Management (Admin and System Admin only)
@@ -91,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/batch', [InventoryController::class, 'batchStore'])->name('api.inventories.batch');
             Route::put('/{inventory}', [InventoryController::class, 'update'])->name('api.inventories.update');
             Route::delete('/{inventory}', [InventoryController::class, 'destroy'])->name('api.inventories.destroy');
+            Route::delete('/by-accountable/{accountable}', [InventoryController::class, 'destroyAccountable'])->name('api.inventories.destroy-accountable');
             Route::post('/import-excel', [InventoryController::class, 'importExcel'])->name('api.inventories.import-excel');
         });
 

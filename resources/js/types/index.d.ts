@@ -114,6 +114,40 @@ export interface RecentBackup {
     timestamp: number;
 }
 
+// Inventories Activity Types
+export interface RecentInventoryChange {
+    id: number;
+    inventory_accountable: string;
+    inventory_name: string;
+    inventory_status: string;
+    event: 'created' | 'updated';
+    updated_at: string;
+    updated_at_full: string;
+    timestamp: number;
+}
+
+export interface RecentInventoryDeletion {
+    accountable: string;
+    count: number;
+    item?: { id: number; inventory_name: string } | null;
+    deleted_at: string;
+    deleted_at_full: string;
+    timestamp: number;
+}
+
+export interface InventoriesActivitySummary {
+    added_last_24h: number;
+    updated_last_24h: number;
+    deleted_last_24h: number;
+    last_change_at: string | null;
+}
+
+export interface InventoriesActivity {
+    summary: InventoriesActivitySummary;
+    recent_changes: RecentInventoryChange[];
+    recent_deletions: RecentInventoryDeletion[];
+}
+
 export interface DashboardApiResponse<T> {
     success: boolean;
     data: T;

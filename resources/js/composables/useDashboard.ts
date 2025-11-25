@@ -7,6 +7,7 @@ import type {
     RecentUser,
     RecentInvitation,
     RecentBackup,
+    InventoriesActivity,
 } from '@/types';
 
 export function useDashboard() {
@@ -15,12 +16,14 @@ export function useDashboard() {
     const recentUsers = ref<RecentUser[]>([]);
     const recentInvitations = ref<RecentInvitation[]>([]);
     const recentBackups = ref<RecentBackup[]>([]);
+    const inventoriesActivity = ref<InventoriesActivity | null>(null);
     
     const isLoading = ref(false);
     const error = ref<string | null>(null);
     const lastUpdated = ref<Date | null>(null);
     
     let refreshInterval: number | null = null;
+    let inventoriesInterval: number | null = null;
 
     /**
      * Fetch dashboard statistics
@@ -113,6 +116,23 @@ export function useDashboard() {
     };
 
     /**
+     * Fetch inventories activity
+     */
+    const fetchInventoriesActivity = async () => {
+        try {
+            const response = await axios.get<DashboardApiResponse<InventoriesActivity>>(
+                '/api/dashboard/inventories-activity'
+            );
+            if (response.data.success) {
+                inventoriesActivity.value = response.data.data;
+            }
+        } catch (err) {
+            console.error('Failed to fetch inventories activity:', err);
+            // do not throw; keep dashboard operational
+        }
+    };
+
+    /**
      * Fetch all dashboard data
      */
     const fetchAllData = async () => {
@@ -126,6 +146,7 @@ export function useDashboard() {
                 fetchRecentUsers(),
                 fetchRecentInvitations(),
                 fetchRecentBackups(),
+                fetchInventoriesActivity(),
             ]);
             
             lastUpdated.value = new Date();
@@ -161,6 +182,10 @@ export function useDashboard() {
             clearInterval(refreshInterval);
             refreshInterval = null;
         }
+        if (inventoriesInterval !== null) {
+            clearInterval(inventoriesInterval);
+            inventoriesInterval = null;
+        }
     };
 
     /**
@@ -168,6 +193,18 @@ export function useDashboard() {
      */
     const refresh = async () => {
         await fetchAllData();
+    };
+
+    /**
+     * Start real-time inventories activity polling
+     */
+    const startInventoriesRealtime = (interval: number = 5000) => {
+        if (inventoriesInterval !== null) {
+            clearInterval(inventoriesInterval);
+        }
+        inventoriesInterval = window.setInterval(() => {
+            fetchInventoriesActivity();
+        }, interval);
     };
 
     // Auto-fetch on mount
@@ -187,6 +224,7 @@ export function useDashboard() {
         recentUsers,
         recentInvitations,
         recentBackups,
+        inventoriesActivity,
         
         // State
         isLoading,
@@ -198,5 +236,7 @@ export function useDashboard() {
         startAutoRefresh,
         stopAutoRefresh,
         fetchAllData,
+        startInventoriesRealtime,
+        fetchInventoriesActivity,
     };
 }
