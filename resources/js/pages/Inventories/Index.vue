@@ -181,18 +181,18 @@ async function deleteAccountable(accountable: string) {
           <div v-if="filteredGroups.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card v-for="group in filteredGroups" :key="group.inventory_accountable" class="overflow-hidden">
               <CardHeader class="border-b bg-muted/30">
-                <CardTitle class="text-base sm:text-lg">{{ group.inventory_accountable }}</CardTitle>
-                <CardDescription class="text-xs text-muted-foreground">
-                  <div class="flex flex-wrap gap-2">
-                    <span v-for="name in namesWithCount(group).names" :key="name" class="inline-flex items-center gap-1">
-                      <CheckCircle class="h-3.5 w-3.5 text-green-600" />
-                      <span class="truncate">{{ name }}</span>
-                    </span>
-                    <span v-if="namesWithCount(group).remaining > 0" class="text-xs">+{{ namesWithCount(group).remaining }} more</span>
-                  </div>
-                </CardDescription>
+                <CardTitle class="text-base sm:text-lg text-start">{{ group.inventory_accountable }}</CardTitle>
               </CardHeader>
-              <CardFooter class="p-4 flex flex-row flex-wrap gap-2">
+              <CardContent class="py-4">
+                <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-start">
+                  <span v-for="name in namesWithCount(group).names" :key="name" class="inline-flex items-center gap-1">
+                    <CheckCircle class="h-3.5 w-3.5 text-green-600" />
+                    <span class="truncate">{{ name }}</span>
+                  </span>
+                  <span v-if="namesWithCount(group).remaining > 0" class="text-xs text-muted-foreground">+{{ namesWithCount(group).remaining }} more</span>
+                </div>
+              </CardContent>
+              <CardFooter class="mt-auto p-4 flex flex-row flex-wrap items-center gap-2">
                 <TooltipProvider :delay-duration="0">
                   <Tooltip>
                     <TooltipTrigger as-child>
