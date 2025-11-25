@@ -96,9 +96,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{inventory}', [InventoryController::class, 'destroy'])->name('api.inventories.destroy');
             Route::delete('/by-accountable/{accountable}', [InventoryController::class, 'destroyAccountable'])->name('api.inventories.destroy-accountable');
             Route::post('/import-excel', [InventoryController::class, 'importExcel'])->name('api.inventories.import-excel');
-            Route::post('/share', [InventoryController::class, 'createShare'])->name('api.inventories.share');
-            Route::delete('/share/{share}', [InventoryController::class, 'revokeShare'])->name('api.inventories.share.revoke');
-            Route::get('/share/{share}/accesses', [InventoryController::class, 'shareAccesses'])->name('api.inventories.share.accesses');
         });
 
         Route::get('/export-excel', [InventoryController::class, 'exportExcel'])->name('api.inventories.export-excel');
@@ -106,9 +103,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export-pdf/{accountable}', [InventoryController::class, 'exportPdf'])->name('api.inventories.export-pdf');
     });
 });
-
-Route::get('inventories/share/{token}', [InventoryController::class, 'viewShare'])->middleware('throttle:120,1')->name('inventories.share.view');
-Route::get('inventories/share-logs', [InventoryController::class, 'shareLogsPage'])->middleware(['auth', EnsureUserHasAdminPrivileges::class])->name('inventories.share.logs');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
