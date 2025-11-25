@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>IT Inventories — {{ $accountable }}</title>
+    <title>IT Inventories — {{ isset($accountable) ? $accountable : 'All Accountables' }}</title>
     <style>
         @page { margin: 24px 28px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #111827; }
@@ -35,35 +35,72 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <div class="brand">{{ config('app.name') }}</div>
-            <div class="title">IT Inventories — {{ $accountable }}</div>
-            <div class="meta">Generated {{ now()->format('Y-m-d H:i') }} • {{ $items->count() }} items</div>
-        </div>
-    </div>
-    <div class="rule"></div>
+    @if(isset($groups))
+        @foreach($groups as $accountable => $items)
+            <div class="header">
+                <div>
+                    <div class="brand">{{ config('app.name') }}</div>
+                    <div class="title">IT Inventories — {{ $accountable }}</div>
+                    <div class="meta">Generated {{ now()->format('Y-m-d H:i') }} • {{ $items->count() }} items</div>
+                </div>
+            </div>
+            <div class="rule"></div>
 
-    <table>
-        <thead>
-            <tr>
-                <th class="col-name">Name</th>
-                <th class="col-spec">Specification</th>
-                <th class="col-brand">Brand</th>
-                <th class="col-status">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($items as $item)
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-name">Name</th>
+                        <th class="col-spec">Specification</th>
+                        <th class="col-brand">Brand</th>
+                        <th class="col-status">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($items as $item)
+                        <tr>
+                            <td class="col-name">{{ $item->inventory_name }}</td>
+                            <td class="col-spec">{{ $item->inventory_specification }}</td>
+                            <td class="col-brand">{{ $item->inventory_brand }}</td>
+                            <td class="col-status status">{{ $item->inventory_status }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @if(!$loop->last)
+                <div style="page-break-after: always;"></div>
+            @endif
+        @endforeach
+    @else
+        <div class="header">
+            <div>
+                <div class="brand">{{ config('app.name') }}</div>
+                <div class="title">IT Inventories — {{ $accountable }}</div>
+                <div class="meta">Generated {{ now()->format('Y-m-d H:i') }} • {{ $items->count() }} items</div>
+            </div>
+        </div>
+        <div class="rule"></div>
+
+        <table>
+            <thead>
                 <tr>
-                    <td class="col-name">{{ $item->inventory_name }}</td>
-                    <td class="col-spec">{{ $item->inventory_specification }}</td>
-                    <td class="col-brand">{{ $item->inventory_brand }}</td>
-                    <td class="col-status status">{{ $item->inventory_status }}</td>
+                    <th class="col-name">Name</th>
+                    <th class="col-spec">Specification</th>
+                    <th class="col-brand">Brand</th>
+                    <th class="col-status">Status</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach($items as $item)
+                    <tr>
+                        <td class="col-name">{{ $item->inventory_name }}</td>
+                        <td class="col-spec">{{ $item->inventory_specification }}</td>
+                        <td class="col-brand">{{ $item->inventory_brand }}</td>
+                        <td class="col-status status">{{ $item->inventory_status }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
     <script type="text/php">
         if (isset($pdf)) {

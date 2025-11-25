@@ -385,24 +385,40 @@ class DashboardController extends Controller
             usort($recentDeletions, function ($a, $b) {
                 return ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0);
             });
-            $recentDeletions = array_slice($recentDeletions, 0, 10);
-
-            $recentChangesItems = Inventory::orderByDesc('updated_at')
-                ->limit(10)
-                ->get()
-                ->map(function ($it) {
-                    $event = ($it->updated_at && $it->created_at && $it->updated_at->eq($it->created_at)) ? 'created' : 'updated';
-                    return [
-                        'id' => (int) $it->id,
-                        'inventory_accountable' => (string) $it->inventory_accountable,
-                        'inventory_name' => (string) $it->inventory_name,
-                        'inventory_status' => (string) $it->inventory_status,
-                        'event' => $event,
-                        'updated_at' => optional($it->updated_at)->toDateTimeString(),
-                        'updated_at_full' => optional($it->updated_at)->toDateTimeString(),
-                        'timestamp' => optional($it->updated_at)->getTimestamp(),
+            $recentDeletions = array_slice($recentDeletions, 0, 5);
+            $items = Inventory::orderByDesc('updated_at')
+                ->get(['inventory_accountable', 'updated_at', 'created_at']);
+            $latestByAccountable = [];
+            foreach ($items as $it) {
+                $acc = (string) $it->inventory_accountable;
+                $ts = optional($it->updated_at)->getTimestamp() ?? 0;
+                if (!isset($latestByAccountable[$acc]) || ($latestByAccountable[$acc]['timestamp'] ?? 0) < $ts) {
+                    $eventType = ($it->updated_at && $it->created_at && $it->updated_at->eq($it->created_at)) ? 'created' : 'updated';
+                    $latestByAccountable[$acc] = [
+                        'accountable' => $acc,
+                        'event' => $eventType,
+                        'timestamp' => $ts,
+                        'at' => optional($it->updated_at)->toDateTimeString(),
+                        'at_full' => optional($it->updated_at)->toDateTimeString(),
                     ];
-                });
+                }
+            }
+
+            $recentAccountables = array_values($latestByAccountable);
+            foreach ($recentDeletions as $del) {
+                $recentAccountables[] = [
+                    'accountable' => $del['accountable'],
+                    'event' => 'deleted',
+                    'timestamp' => $del['timestamp'],
+                    'at' => $del['deleted_at'],
+                    'at_full' => $del['deleted_at_full'],
+                    'count' => $del['count'],
+                ];
+            }
+            usort($recentAccountables, function ($a, $b) {
+                return ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0);
+            });
+            $recentAccountables = array_slice($recentAccountables, 0, 5);
 
             $latestUpdate = Inventory::max('updated_at');
             $latestDeletionTs = null;
@@ -437,8 +453,7 @@ class DashboardController extends Controller
                         'deleted_last_24h' => (int) $deletedLast24h,
                         'last_change_at' => $lastChangeAt,
                     ],
-                    'recent_changes' => $recentChangesItems,
-                    'recent_deletions' => $recentDeletions,
+                    'recent_accountables' => $recentAccountables,
                 ],
             ]);
         } catch (\Exception $e) {

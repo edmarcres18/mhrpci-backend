@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Search, RefreshCw } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2 } from 'lucide-vue-next';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from '@inertiajs/vue3';
 
 type ToastType = 'success' | 'error';
@@ -64,9 +65,17 @@ function exportExcel(accountable?: string) {
   window.location.href = url;
 }
 
-function exportPdf(accountable: string) {
-  const url = `/api/inventories/export-pdf/${encodeURIComponent(accountable)}`;
+function exportPdf(accountable?: string) {
+  const url = accountable ? `/api/inventories/export-pdf/${encodeURIComponent(accountable)}` : '/api/inventories/export-pdf';
   window.location.href = url;
+}
+
+function namesPreview(group: InventoryGroup) {
+  const names = group.items.map((i) => i.inventory_name);
+  const max = 8;
+  if (names.length <= max) return names.join(', ');
+  const more = names.length - max;
+  return `${names.slice(0, max).join(', ')} +${more} more`;
 }
 
 const filteredGroups = computed(() => groups.value);
@@ -107,6 +116,10 @@ async function deleteAccountable(accountable: string) {
         <div class="flex items-center gap-2">
           <Badge variant="secondary">Groups: {{ groups.length }}</Badge>
           <Badge variant="outline">Items: {{ totalItems }}</Badge>
+        </div>
+        <div class="flex items-center gap-2">
+          <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel()"><FileSpreadsheet class="size-4" /> Export All Excel</Button>
+          <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf()"><FileText class="size-4" /> Export All PDF</Button>
         </div>
       </div>
 
@@ -160,28 +173,77 @@ async function deleteAccountable(accountable: string) {
           <CardDescription>Select an accountable to view and manage items.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div class="mb-3 grid gap-3 sm:grid-cols-3">
+          <div class="mb-3">
             <div class="relative">
               <Search class="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input class="pl-8" v-model="search" placeholder="Search by accountable" @input="fetchGroups" />
+              <Input class="pl-8 w-full" v-model="search" placeholder="Search by accountable" @input="fetchGroups" />
             </div>
-            <Button variant="secondary" @click="fetchGroups"><RefreshCw class="size-4" /> Refresh</Button>
-            <div class="hidden sm:block"></div>
           </div>
 
           <div v-if="filteredGroups.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card v-for="group in filteredGroups" :key="group.inventory_accountable" class="overflow-hidden">
               <CardHeader class="border-b bg-muted/30">
                 <CardTitle class="text-base sm:text-lg">{{ group.inventory_accountable }}</CardTitle>
-                <CardDescription>{{ group.items.length }} items</CardDescription>
+                <CardDescription class="text-xs text-muted-foreground">{{ namesPreview(group) }}</CardDescription>
               </CardHeader>
-              <CardFooter class="p-4 flex flex-col sm:flex-row sm:flex-wrap gap-2">
-                <Link class="w-full sm:w-auto" :href="`/inventories/${encodeURIComponent(group.inventory_accountable)}`">
-                  <Button class="w-full sm:w-auto">View</Button>
-                </Link>
-                <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel(group.inventory_accountable)"><FileSpreadsheet class="size-4" /> Excel</Button>
-                <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf(group.inventory_accountable)"><FileText class="size-4" /> PDF</Button>
-                <Button class="w-full sm:w-auto" variant="destructive" @click="deleteAccountable(group.inventory_accountable)">Delete</Button>
+              <CardFooter class="p-4 flex flex-row flex-wrap gap-2">
+                <TooltipProvider :delay-duration="0">
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Link :href="`/inventories/${encodeURIComponent(group.inventory_accountable)}`">
+                        <Button variant="ghost" size="icon" class="h-9 w-9">
+                          <Eye class="size-4" />
+                          <span class="sr-only">View</span>
+                        </Button>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>View</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider :delay-duration="0">
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button variant="ghost" size="icon" class="h-9 w-9" @click="exportExcel(group.inventory_accountable)">
+                        <FileSpreadsheet class="size-4" />
+                        <span class="sr-only">Export Excel</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Export Excel</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider :delay-duration="0">
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button variant="ghost" size="icon" class="h-9 w-9" @click="exportPdf(group.inventory_accountable)">
+                        <FileText class="size-4" />
+                        <span class="sr-only">Export PDF</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Export PDF</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider :delay-duration="0">
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Button variant="destructive" size="icon" class="h-9 w-9" @click="deleteAccountable(group.inventory_accountable)">
+                        <Trash2 class="size-4" />
+                        <span class="sr-only">Delete</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Delete</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </CardFooter>
             </Card>
           </div>

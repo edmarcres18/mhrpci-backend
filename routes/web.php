@@ -99,6 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         Route::get('/export-excel', [InventoryController::class, 'exportExcel'])->name('api.inventories.export-excel');
+        Route::get('/export-pdf', [InventoryController::class, 'exportPdfAll'])->name('api.inventories.export-pdf-all');
         Route::get('/export-pdf/{accountable}', [InventoryController::class, 'exportPdf'])->name('api.inventories.export-pdf');
     });
 });

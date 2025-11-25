@@ -298,4 +298,15 @@ class InventoryController extends Controller
         $safeAcc = preg_replace('/[^A-Za-z0-9_\-]/', '_', $accountable);
         return $pdf->download("it-inventories_{$safeAcc}_{$ts}.pdf");
     }
+
+    public function exportPdfAll()
+    {
+        $items = Inventory::orderBy('inventory_accountable')->orderBy('inventory_name')->get();
+        $groups = $items->groupBy('inventory_accountable');
+        $pdf = Pdf::loadView('inventories.pdf', [
+            'groups' => $groups,
+        ]);
+        $ts = now()->format('Ymd_His');
+        return $pdf->download("it-inventories_all_{$ts}.pdf");
+    }
 }
