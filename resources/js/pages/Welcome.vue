@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { login } from '@/routes';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { login, dashboard } from '@/routes';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useSiteSettings } from '@/composables/useSiteSettings';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 const mobileMenuOpen = ref(false);
 const { siteSettings } = useSiteSettings();
 const currentYear = new Date().getFullYear();
+
+const page = usePage();
+const isAuthed = computed(() => !!(page.props.auth as any)?.user);
 
 const activeCard = ref(0);
 const cursorPosition = ref({ x: 50, y: 30 });
@@ -152,11 +155,11 @@ onUnmounted(() => {
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <Link :href="login()" class="inline-flex items-center px-4 md:px-6 py-2 md:py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all transform hover:scale-105">
+                        <Link :href="isAuthed ? dashboard() : login()" class="inline-flex items-center px-4 md:px-6 py-2 md:py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all transform hover:scale-105">
                             <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
-                            <span>Login</span>
+                            <span>{{ isAuthed ? 'Dashboard' : 'Login' }}</span>
                         </Link>
                         <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-blue-50">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,8 +192,8 @@ onUnmounted(() => {
                             Manage IT inventories, users, site information, and system backups for MHR Property Conglomerate Inc. through a robust administrative interface.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <Link :href="login()" class="inline-flex items-center justify-center px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
-                                Access Dashboard
+                            <Link :href="isAuthed ? dashboard() : login()" class="inline-flex items-center justify-center px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                                {{ isAuthed ? 'Go to Dashboard' : 'Login to Continue' }}
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
@@ -344,7 +347,7 @@ onUnmounted(() => {
                                 <h3 class="text-2xl font-bold">Ready to manage your backend?</h3>
                                 <p class="mt-1 text-purple-100">Access the dashboard and start controlling your data.</p>
                             </div>
-                            <Link :href="login()" class="inline-flex items-center justify-center px-8 py-4 bg-white text-purple-700 font-bold rounded-xl shadow hover:bg-purple-50">
+                            <Link :href="isAuthed ? dashboard() : login()" class="inline-flex items-center justify-center px-8 py-4 bg-white text-purple-700 font-bold rounded-xl shadow hover:bg-purple-50">
                                 Go to Dashboard
                                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -390,3 +393,5 @@ onUnmounted(() => {
 .border-purple-100 { border-color: rgb(243 232 255); }
 .hover\:bg-purple-50:hover { background-color: rgb(243 232 255); }
 </style>
+const page = usePage();
+const isAuthed = computed(() => !!(page.props.auth as any)?.user);
