@@ -7,6 +7,7 @@ use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\ConsumableController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserHasAdminPrivileges;
 use App\Http\Middleware\EnsureUserIsSystemAdmin;
@@ -101,6 +102,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export-excel', [InventoryController::class, 'exportExcel'])->name('api.inventories.export-excel');
         Route::get('/export-pdf', [InventoryController::class, 'exportPdfAll'])->name('api.inventories.export-pdf-all');
         Route::get('/export-pdf/{accountable}', [InventoryController::class, 'exportPdf'])->name('api.inventories.export-pdf');
+    });
+
+    // Consumables Pages
+    Route::get('consumables', [ConsumableController::class, 'page'])->name('consumables.page');
+    Route::get('consumables/create', [ConsumableController::class, 'createPage'])->name('consumables.create');
+    Route::get('consumables/{consumable}/edit', [ConsumableController::class, 'editPage'])->name('consumables.edit');
+    Route::get('consumables/usage-history', [ConsumableController::class, 'usageHistoryPage'])->name('consumables.usage-history');
+    Route::get('consumables/logs', function () { return Inertia::render('Consumables/Logs'); })->name('consumables.logs');
+    Route::get('consumables/trash', function () { return Inertia::render('Consumables/Trash'); })->name('consumables.trash');
+
+    // Consumables API
+    Route::prefix('api/consumables')->group(function () {
+        Route::get('/', [ConsumableController::class, 'index'])->name('api.consumables.index');
+        Route::get('/usages', [ConsumableController::class, 'usages'])->name('api.consumables.usages');
+        Route::get('/logs', [ConsumableController::class, 'logs'])->name('api.consumables.logs');
+        Route::get('/trashed', [ConsumableController::class, 'trashed'])->name('api.consumables.trashed');
+        Route::get('/{consumable}', [ConsumableController::class, 'show'])->whereNumber('consumable')->name('api.consumables.show');
+
+        Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
+            Route::post('/', [ConsumableController::class, 'store'])->name('api.consumables.store');
+            Route::put('/{consumable}', [ConsumableController::class, 'update'])->whereNumber('consumable')->name('api.consumables.update');
+            Route::delete('/{consumable}', [ConsumableController::class, 'destroy'])->whereNumber('consumable')->name('api.consumables.destroy');
+            Route::post('/{consumable}/usage', [ConsumableController::class, 'usage'])->whereNumber('consumable')->name('api.consumables.usage');
+            Route::post('/import-excel', [ConsumableController::class, 'importExcel'])->name('api.consumables.import-excel');
+            Route::post('/{id}/restore', [ConsumableController::class, 'restore'])->whereNumber('id')->name('api.consumables.restore');
+        });
+
+        Route::delete('/{id}/force', [ConsumableController::class, 'forceDestroy'])
+            ->whereNumber('id')
+            ->middleware(EnsureUserIsSystemAdmin::class)
+            ->name('api.consumables.force-destroy');
+
+        Route::get('/export-excel', [ConsumableController::class, 'exportExcel'])->name('api.consumables.export-excel');
+        Route::get('/export-pdf', [ConsumableController::class, 'exportPdf'])->name('api.consumables.export-pdf');
+        Route::get('/export-usage-pdf', [ConsumableController::class, 'exportUsagePdf'])->name('api.consumables.export-usage-pdf');
     });
 });
 
