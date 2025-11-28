@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { reactive, ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import Toast from '@/pages/SiteSettings/Toast.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useSiteSettings } from '@/composables/useSiteSettings';
+import { LoaderCircle } from 'lucide-vue-next';
 
 type ToastType = 'success' | 'error';
 
@@ -147,43 +148,43 @@ async function submit() {
 
       <Toast v-model="toast.show" :type="toast.type" :message="toast.message" />
 
-      <form class="form" @submit.prevent="submit">
+      <form class="form" @submit.prevent="submit" novalidate>
         <div class="form-grid">
         <div class="field">
-          <Label class="label">Department <span class="req">*</span></Label>
-          <Input v-model="form.department" class="input" placeholder="e.g. IT Department" maxlength="255" />
-          <p v-if="errors.department" class="error">{{ errors.department }}</p>
+          <Label class="label" for="department">Department <span class="req">*</span></Label>
+          <Input v-model="form.department" class="input" id="department" name="department" placeholder="e.g. IT Department" maxlength="255" required autocomplete="organization" :aria-invalid="!!errors.department" :aria-describedby="errors.department ? 'error-department' : undefined" />
+          <p v-if="errors.department" class="error" id="error-department" role="alert" aria-live="polite">{{ errors.department }}</p>
         </div>
         <div class="field">
-          <Label class="label">Email <span class="req">*</span></Label>
-          <Input v-model="form.email" class="input" type="email" placeholder="e.g. it@example.com" maxlength="255" />
-          <p v-if="errors.email" class="error">{{ errors.email }}</p>
+          <Label class="label" for="email">Email <span class="req">*</span></Label>
+          <Input v-model="form.email" class="input" id="email" name="email" type="email" placeholder="e.g. it@company.com" maxlength="255" required autocomplete="email" inputmode="email" :aria-invalid="!!errors.email" :aria-describedby="errors.email ? 'error-email' : undefined" />
+          <p v-if="errors.email" class="error" id="error-email" role="alert" aria-live="polite">{{ errors.email }}</p>
         </div>
         <div class="field">
-          <Label class="label">Email Password <span class="req">*</span></Label>
-          <Input v-model="form.password" class="input" type="text" placeholder="Secure password" maxlength="255" />
-          <p v-if="errors.password" class="error">{{ errors.password }}</p>
+          <Label class="label" for="password">Email Password <span class="req">*</span></Label>
+          <Input v-model="form.password" class="input" id="password" name="password" type="password" placeholder="Secure password" maxlength="255" required autocomplete="current-password" :aria-invalid="!!errors.password" :aria-describedby="errors.password ? 'error-password' : undefined" />
+          <p v-if="errors.password" class="error" id="error-password" role="alert" aria-live="polite">{{ errors.password }}</p>
         </div>
         <div class="field">
-          <Label class="label">Person In Charge <span class="req">*</span></Label>
-          <Input v-model="form.person_in_charge" class="input" placeholder="e.g. John Doe" maxlength="255" />
-          <p v-if="errors.person_in_charge" class="error">{{ errors.person_in_charge }}</p>
+          <Label class="label" for="person_in_charge">Person In Charge <span class="req">*</span></Label>
+          <Input v-model="form.person_in_charge" class="input" id="person_in_charge" name="person_in_charge" placeholder="e.g. John Doe" maxlength="255" required autocomplete="name" :aria-invalid="!!errors.person_in_charge" :aria-describedby="errors.person_in_charge ? 'error-person_in_charge' : undefined" />
+          <p v-if="errors.person_in_charge" class="error" id="error-person_in_charge" role="alert" aria-live="polite">{{ errors.person_in_charge }}</p>
         </div>
         <div class="field">
-          <Label class="label">Position <span class="req">*</span></Label>
-          <Input v-model="form.position" class="input" placeholder="e.g. IT Manager" maxlength="255" />
-          <p v-if="errors.position" class="error">{{ errors.position }}</p>
+          <Label class="label" for="position">Position <span class="req">*</span></Label>
+          <Input v-model="form.position" class="input" id="position" name="position" placeholder="e.g. IT Manager" maxlength="255" required autocomplete="organization-title" :aria-invalid="!!errors.position" :aria-describedby="errors.position ? 'error-position' : undefined" />
+          <p v-if="errors.position" class="error" id="error-position" role="alert" aria-live="polite">{{ errors.position }}</p>
         </div>
         </div>
 
-        <input v-model="form.website" name="website" type="text" class="honeypot" />
+        <input v-model="form.website" name="website" type="text" class="honeypot" aria-hidden="true" tabindex="-1" autocomplete="off" />
 
         <div class="actions">
-          <Button class="cta" :disabled="processing" type="submit">{{ processing ? 'SUBMITTING…' : 'SUBMIT' }}</Button>
+          <Button class="cta" :disabled="processing" type="submit"><LoaderCircle v-if="processing" class="mr-2 h-4 w-4 animate-spin" />{{ processing ? 'Submitting' : 'Submit' }}</Button>
         </div>
         <div v-if="errors.general" class="error">{{ errors.general }}</div>
         <div class="email-link">
-          <a href="/public/company-phones" class="link">Submit an Company Phone? click here</a>
+          <Link href="/public/company-phones" class="link" prefetch>Submit a Company Phone? Click here</Link>
         </div>
       </form>
     </div>
@@ -207,26 +208,30 @@ async function submit() {
 @keyframes drift { 0% { margin-left: 0; } 50% { margin-left: 8px; } 100% { margin-left: 0; } }
 .wave { height: 64px; background: transparent; }
 .wave-svg { width: 100%; height: 100%; display: block; }
-.container { max-width: 720px; margin: 0 auto; padding: 16px; min-height: calc(100svh - 64px); display: grid; align-content: center; gap: 12px; position: relative; z-index: 1; }
+.container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: calc(100svh - 64px); display: grid; align-content: center; gap: 16px; position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; justify-content: center; margin-top: 10px; }
 .logo img { max-height: 56px; }
-.title { font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter); font-size: clamp(22px, 4vw, 32px); font-weight: 800; color: #fff; margin-top: 6px; margin-bottom: 12px; text-shadow: 0 2px 12px rgba(255,255,255,0.15); }
-.subtitle { font-size: clamp(12px, 2.4vw, 14px); color: #d1d5db; margin-top: -4px; margin-bottom: 16px; }
-.form { display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
-.form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.title { font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter); font-size: clamp(26px, 4.5vw, 36px); font-weight: 800; color: #fff; margin-top: 6px; margin-bottom: 12px; text-shadow: 0 2px 12px rgba(255,255,255,0.15); }
+.subtitle { font-size: clamp(13px, 2.6vw, 16px); color: #e5e7eb; margin-top: -4px; margin-bottom: 18px; }
+.form { display: flex; flex-direction: column; gap: 16px; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,255,255,0.75); border-radius: 22px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.30); backdrop-filter: saturate(160%) blur(6px); }
+.form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 @media (min-width: 680px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-.label { font-size: 14px; color: #374151; font-weight: 600; }
+.label { font-size: clamp(13px, 1.6vw, 15px); color: #1F2937; font-weight: 700; }
+.field { display: flex; flex-direction: column; gap: 6px; }
 .req { color: #ef4444; }
-.input { height: 40px; border-radius: 12px; border: 1px solid #E5E7EB; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB; }
+.input { height: 46px; border-radius: 14px; border: 1px solid #E5E7EB; background: #FFFFFF; box-shadow: inset 0 0 0 1px #E5E7EB; font-size: 15px; padding: 10px 12px; }
+.input { color: #000000; caret-color: var(--accent); }
+.input::placeholder { color: #6B7280; }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25), inset 0 0 0 1px var(--accent); }
-.actions { margin-top: 10px; text-align: center; }
-.cta { width: 200px; height: 44px; border-radius: 12px; background-image: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; box-shadow: 0 10px 24px rgba(220,38,38,0.35); }
+.actions { margin-top: 12px; text-align: center; }
+.cta { width: 240px; height: 50px; border-radius: 14px; background-image: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 14px 28px rgba(220,38,38,0.35); }
 .cta:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .cta:focus { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3); }
+.cta:disabled { opacity: .65; cursor: not-allowed; }
 .alt-cta { margin-left: 12px; height: 48px; border-radius: 10px; background: #F5F3FF; color: #4C1D95; font-weight: 600; }
 .alt-cta:hover { background: #EEE8FF; }
 .icon { width: 16px; height: 16px; margin-right: 8px; }
-.error { font-size: 12px; color: #DC2626; }
+.error { font-size: 13px; color: #DC2626; margin-top: 4px; }
 .honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .info-box { background: linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(5,150,105,0.12) 100%); border: 1px solid rgba(220,38,38,0.35); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
 .info-title { font-size: 16px; font-weight: 700; color: #fff; margin: 0 0 12px 0; }
@@ -241,14 +246,14 @@ async function submit() {
 @media (prefers-reduced-motion: reduce) { .lights li, .snow i { animation: none !important; } }
 
 .wave { height: 64px; }
-.container { padding: 16px; min-height: calc(100svh - 64px); display: grid; align-content: center; gap: 12px; }
-.title { font-size: clamp(22px, 4vw, 32px); margin-top: 6px; margin-bottom: 12px; }
-.subtitle { font-size: clamp(12px, 2.4vw, 14px); margin-top: -4px; margin-bottom: 16px; }
-.form { gap: 12px; padding: 16px; }
-.form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.container { padding: 20px; min-height: calc(100svh - 64px); display: grid; align-content: center; gap: 18px; }
+.title { font-size: clamp(26px, 4.5vw, 36px); margin-top: 6px; margin-bottom: 12px; }
+.subtitle { font-size: clamp(13px, 2.6vw, 16px); margin-top: -4px; margin-bottom: 18px; }
+.form { gap: 16px; padding: 24px; }
+.form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 @media (min-width: 680px) { .form-grid { grid-template-columns: 1fr 1fr; } }
-.input { height: 40px; }
-.cta { height: 44px; }
+.input { height: 46px; }
+.cta { height: 50px; }
 
 .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 9999px; background-image: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800; box-shadow: 0 12px 24px rgba(0,0,0,0.35); display: inline-flex; align-items: center; justify-content: center; z-index: 1001; }
 .fab:hover { filter: brightness(1.08); transform: translateY(-1px); }
