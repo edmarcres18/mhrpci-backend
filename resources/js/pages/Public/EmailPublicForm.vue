@@ -137,8 +137,9 @@ async function submit() {
       <div class="brand">
         <div class="logo">
           <img v-if="siteSettings.site_logo" :src="siteSettings.site_logo" :alt="siteSettings.site_name" />
-          <AppLogoIcon v-else />
+          <AppLogoIcon v-else className="logo-icon" />
         </div>
+        <div class="brand-name">MHRPCI FORM</div>
       </div>
 
       <h1 class="title">Enter Company Email Used</h1>
@@ -209,8 +210,10 @@ async function submit() {
 .wave { height: 64px; background: transparent; }
 .wave-svg { width: 100%; height: 100%; display: block; }
 .container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: calc(100svh - 64px); display: grid; align-content: center; gap: 16px; position: relative; z-index: 1; }
-.brand { display: flex; align-items: center; justify-content: center; margin-top: 10px; }
-.logo img { max-height: 56px; }
+.brand { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.logo img { max-height: 84px; }
+.logo-icon { height: 84px; width: auto; }
+.brand-name { font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter); font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: #fff; letter-spacing: 0.03em; text-shadow: 0 2px 12px rgba(255,255,255,0.15); }
 .title { font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter); font-size: clamp(26px, 4.5vw, 36px); font-weight: 800; color: #fff; margin-top: 6px; margin-bottom: 12px; text-shadow: 0 2px 12px rgba(255,255,255,0.15); }
 .subtitle { font-size: clamp(13px, 2.6vw, 16px); color: #e5e7eb; margin-top: -4px; margin-bottom: 18px; }
 .form { display: flex; flex-direction: column; gap: 16px; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,255,255,0.75); border-radius: 22px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.30); backdrop-filter: saturate(160%) blur(6px); }
