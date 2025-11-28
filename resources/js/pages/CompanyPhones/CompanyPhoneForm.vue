@@ -50,7 +50,7 @@ function validateLocal(): boolean {
   const map: Record<string, string> = {};
   if (!form.department?.trim()) map.department = 'Department is required';
   if (!form.phone_number?.trim()) map.phone_number = 'Phone number is required';
-  else if (!/^[+0-9()\-\s]{6,32}$/.test(form.phone_number)) map.phone_number = 'Invalid phone format';
+  else if (!/^\+639\d{10}$/.test(form.phone_number)) map.phone_number = 'Phone must be +639 followed by 10 digits';
   if (!form.person_in_charge?.trim()) map.person_in_charge = 'Person in charge is required';
   if (!form.position?.trim()) map.position = 'Position is required';
   errors.value = map;
@@ -121,7 +121,7 @@ const isEdit = computed(() => !!props.phoneRecord?.id);
             </div>
             <div class="space-y-2">
               <Label>Phone Number *</Label>
-              <Input v-model="form.phone_number" placeholder="e.g. +63 2 555 1234" maxlength="32" aria-invalid="!!errors.phone_number" />
+              <Input v-model="form.phone_number" placeholder="e.g. +6391234567890" maxlength="14" aria-invalid="!!errors.phone_number" />
               <p v-if="errors.phone_number" class="text-xs text-red-600">{{ errors.phone_number }}</p>
             </div>
             <div class="space-y-2">
@@ -150,4 +150,3 @@ const isEdit = computed(() => !!props.phoneRecord?.id);
     </div>
   </AppLayout>
 </template>
-

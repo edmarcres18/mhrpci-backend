@@ -74,7 +74,7 @@ async function submit() {
       <Card>
         <CardHeader>
           <CardTitle>Upload Excel File</CardTitle>
-          <CardDescription>Supported formats: .xlsx, .xls, .csv • Columns: Department, Phone Number, Person In Charge, Position, Extension</CardDescription>
+          <CardDescription>Supported formats: .xlsx, .xls, .csv • Columns: Department, Phone Number (+639XXXXXXXXXX), Person In Charge, Position, Extension</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="space-y-2">
@@ -91,4 +91,3 @@ async function submit() {
     </div>
   </AppLayout>
   </template>
-

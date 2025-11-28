@@ -18,6 +18,13 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+// Public submission forms (no authentication)
+Route::get('public/emails', [EmailController::class, 'publicForm'])->name('public.emails.form');
+Route::post('public/emails', [EmailController::class, 'publicStore'])->middleware('throttle:20,1')->name('public.emails.store');
+
+Route::get('public/company-phones', [CompanyPhoneController::class, 'publicForm'])->name('public.company-phones.form');
+Route::post('public/company-phones', [CompanyPhoneController::class, 'publicStore'])->middleware('throttle:20,1')->name('public.company-phones.store');
+
 Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

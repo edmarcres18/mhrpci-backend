@@ -13,6 +13,33 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class CompanyPhoneController extends Controller
 {
+    public function publicForm()
+    {
+        return Inertia::render('Public/CompanyPhonePublicForm');
+    }
+
+    public function publicStore(Request $request): JsonResponse
+    {
+        if ($request->filled('website')) {
+            return response()->json(['success' => false, 'errors' => ['Invalid submission']], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'department' => ['required', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'regex:/^09\d{9}$/'],
+            'person_in_charge' => ['required', 'string', 'max:255'],
+            'position' => ['required', 'string', 'max:255'],
+            'extension' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        $item = CompanyPhone::create($validator->validated());
+
+        return response()->json(['success' => true, 'data' => $item], 201);
+    }
     public function page()
     {
         return Inertia::render('CompanyPhones/CompanyPhoneList');
@@ -90,7 +117,7 @@ class CompanyPhoneController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'department' => ['required', 'string', 'max:255'],
-            'phone_number' => ['required', 'string', 'max:32', 'regex:/^[+0-9()\-\s]{6,32}$/', 'unique:company_phones,phone_number,' . $companyPhone->id],
+            'phone_number' => ['required', 'string', 'regex:/^\+639\d{10}$/', 'unique:company_phones,phone_number,' . $companyPhone->id],
             'person_in_charge' => ['required', 'string', 'max:255'],
             'position' => ['required', 'string', 'max:255'],
             'extension' => ['nullable', 'string', 'max:20'],
@@ -131,7 +158,7 @@ class CompanyPhoneController extends Controller
             if (!$phone || !$department || !$person || !$position) {
                 continue;
             }
-            if (!preg_match('/^[+0-9()\-\s]{6,32}$/', (string) $phone)) {
+            if (!preg_match('/^\+639\d{10}$/', (string) $phone)) {
                 continue;
             }
             CompanyPhone::updateOrCreate(
@@ -166,4 +193,3 @@ class CompanyPhoneController extends Controller
         return $pdf->download("company_phones_{$ts}.pdf");
     }
 }
-

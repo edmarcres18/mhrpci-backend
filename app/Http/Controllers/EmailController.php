@@ -14,6 +14,45 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class EmailController extends Controller
 {
+    public function publicForm()
+    {
+        return Inertia::render('Public/EmailPublicForm');
+    }
+
+    public function publicStore(Request $request): JsonResponse
+    {
+        if ($request->filled('website')) {
+            return response()->json(['success' => false, 'errors' => ['Invalid submission']], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'department' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:emails,email'],
+            'password' => ['required', 'string', 'max:255'],
+            'person_in_charge' => ['required', 'string', 'max:255'],
+            'position' => ['required', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        // Reject sample/test email domains
+        $email = strtolower($request->email);
+        $domain = substr(strrchr($email, '@'), 1);
+        $invalidDomains = ['example.com', 'test.com', 'sample.com', 'demo.com', 'localhost', 'test.test'];
+        
+        if (in_array($domain, $invalidDomains)) {
+            return response()->json(['success' => false, 'errors' => ['Please use a valid company email, not a sample/test email']], 422);
+        }
+
+        $data = $validator->validated();
+        $data['password'] = Hash::make($data['password']);
+
+        $item = Email::create($data);
+
+        return response()->json(['success' => true, 'data' => $item], 201);
+    }
     public function page()
     {
         return Inertia::render('Emails/EmailList');
@@ -174,4 +213,3 @@ class EmailController extends Controller
         return $pdf->download("emails_{$ts}.pdf");
     }
 }
-
