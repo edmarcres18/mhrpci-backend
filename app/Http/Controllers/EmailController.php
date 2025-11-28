@@ -1,0 +1,177 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Exports\EmailsExport;
+use App\Models\Email;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class EmailController extends Controller
+{
+    public function page()
+    {
+        return Inertia::render('Emails/EmailList');
+    }
+
+    public function importPage()
+    {
+        return Inertia::render('Emails/EmailImport');
+    }
+
+    public function formPage(?Email $email = null)
+    {
+        return Inertia::render('Emails/EmailForm', [
+            'emailRecord' => $email,
+        ]);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $search = (string) $request->get('search', '');
+        $department = (string) $request->get('department', '');
+        $perPage = (int) $request->get('perPage', 10);
+        $allowed = [10, 25, 50, 100];
+        if (!in_array($perPage, $allowed, true)) {
+            $perPage = 10;
+        }
+
+        $query = Email::query();
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhere('person_in_charge', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%");
+            });
+        }
+        if ($department !== '') {
+            $query->where('department', 'like', "%{$department}%");
+        }
+
+        $paginator = $query->orderBy('department')->orderBy('email')->paginate($perPage)->appends($request->query());
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginator->items(),
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'department' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:emails,email'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
+            'person_in_charge' => ['required', 'string', 'max:255'],
+            'position' => ['required', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        $data = $validator->validated();
+        $data['password'] = Hash::make($data['password']);
+
+        $item = Email::create($data);
+
+        return response()->json(['success' => true, 'data' => $item], 201);
+    }
+
+    public function update(Request $request, Email $email): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'department' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:emails,email,' . $email->id],
+            'password' => ['nullable', 'string', 'min:8', 'max:255'],
+            'person_in_charge' => ['required', 'string', 'max:255'],
+            'position' => ['required', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        $data = $validator->validated();
+        if (isset($data['password']) && $data['password'] !== '') {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+        $email->update($data);
+
+        return response()->json(['success' => true, 'data' => $email]);
+    }
+
+    public function destroy(Email $email): JsonResponse
+    {
+        $email->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function importExcel(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()->all()], 422);
+        }
+
+        $file = $request->file('file');
+        $rows = Excel::toArray(null, $file)[0] ?? [];
+        foreach (array_slice($rows, 1) as $row) {
+            $department = $row[0] ?? null;
+            $email = $row[1] ?? null;
+            $password = $row[2] ?? null;
+            $person = $row[3] ?? null;
+            $position = $row[4] ?? null;
+            if (!$email || !$password || !$department || !$person || !$position) {
+                continue;
+            }
+            Email::updateOrCreate(
+                ['email' => (string) $email],
+                [
+                    'department' => (string) $department,
+                    'password' => Hash::make((string) $password),
+                    'person_in_charge' => (string) $person,
+                    'position' => (string) $position,
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function exportExcel()
+    {
+        $year = now()->format('Y');
+        $createdAt = now()->format('Y-m-d_His');
+        $fileName = "Emails_{$year}_{$createdAt}.xlsx";
+        return Excel::download(new EmailsExport(), $fileName);
+    }
+
+    public function exportPDF()
+    {
+        $items = Email::orderBy('department')->orderBy('email')->get();
+        $pdf = Pdf::loadView('emails.pdf', [
+            'items' => $items,
+        ]);
+        $ts = now()->format('Ymd_His');
+        return $pdf->download("emails_{$ts}.pdf");
+    }
+}
+

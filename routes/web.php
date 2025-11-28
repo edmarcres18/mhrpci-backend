@@ -8,6 +8,8 @@ use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ConsumableController;
+use App\Http\Controllers\EmailController;
+use App\Http\Controllers\CompanyPhoneController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserHasAdminPrivileges;
 use App\Http\Middleware\EnsureUserIsSystemAdmin;
@@ -112,6 +114,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('consumables/logs', function () { return Inertia::render('Consumables/Logs'); })->name('consumables.logs');
     Route::get('consumables/trash', function () { return Inertia::render('Consumables/Trash'); })->name('consumables.trash');
 
+    // Company Phones Pages
+    Route::get('company-phones', [CompanyPhoneController::class, 'page'])->name('company-phones.page');
+    Route::get('company-phones/create', [CompanyPhoneController::class, 'formPage'])->name('company-phones.create');
+    Route::get('company-phones/{companyPhone}/edit', [CompanyPhoneController::class, 'formPage'])->name('company-phones.edit');
+    Route::get('company-phones/import', [CompanyPhoneController::class, 'importPage'])->name('company-phones.import');
+
+    // Emails Pages
+    Route::get('emails', [EmailController::class, 'page'])->name('emails.page');
+    Route::get('emails/create', [EmailController::class, 'formPage'])->name('emails.create');
+    Route::get('emails/{email}/edit', [EmailController::class, 'formPage'])->name('emails.edit');
+    Route::get('emails/import', [EmailController::class, 'importPage'])->name('emails.import');
+
     // Consumables API
     Route::prefix('api/consumables')->group(function () {
         Route::get('/', [ConsumableController::class, 'index'])->name('api.consumables.index');
@@ -137,6 +151,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export-excel', [ConsumableController::class, 'exportExcel'])->name('api.consumables.export-excel');
         Route::get('/export-pdf', [ConsumableController::class, 'exportPdf'])->name('api.consumables.export-pdf');
         Route::get('/export-usage-pdf', [ConsumableController::class, 'exportUsagePdf'])->name('api.consumables.export-usage-pdf');
+    });
+
+    // Emails API
+    Route::prefix('api/emails')->group(function () {
+        Route::get('/', [EmailController::class, 'index'])->name('api.emails.index');
+
+        Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
+            Route::post('/', [EmailController::class, 'store'])->name('api.emails.store');
+            Route::put('/{email}', [EmailController::class, 'update'])->name('api.emails.update');
+            Route::delete('/{email}', [EmailController::class, 'destroy'])->name('api.emails.destroy');
+            Route::post('/import', [EmailController::class, 'importExcel'])->name('api.emails.import');
+        });
+
+        Route::get('/export/excel', [EmailController::class, 'exportExcel'])->name('api.emails.export.excel');
+        Route::get('/export/pdf', [EmailController::class, 'exportPDF'])->name('api.emails.export.pdf');
+    });
+
+    // Company Phones API
+    Route::prefix('api/company-phones')->group(function () {
+        Route::get('/', [CompanyPhoneController::class, 'index'])->name('api.company-phones.index');
+
+        Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
+            Route::post('/', [CompanyPhoneController::class, 'store'])->name('api.company-phones.store');
+            Route::put('/{companyPhone}', [CompanyPhoneController::class, 'update'])->name('api.company-phones.update');
+            Route::delete('/{companyPhone}', [CompanyPhoneController::class, 'destroy'])->name('api.company-phones.destroy');
+            Route::post('/import', [CompanyPhoneController::class, 'importExcel'])->name('api.company-phones.import');
+        });
+
+        Route::get('/export/excel', [CompanyPhoneController::class, 'exportExcel'])->name('api.company-phones.export.excel');
+        Route::get('/export/pdf', [CompanyPhoneController::class, 'exportPDF'])->name('api.company-phones.export.pdf');
     });
 });
 
