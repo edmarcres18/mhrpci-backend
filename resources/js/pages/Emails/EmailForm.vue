@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-vue-next';
 
 type ToastType = 'success' | 'error';
 
-const props = defineProps<{ emailRecord?: { id: number; department: string; email: string; person_in_charge: string; position: string } | null }>();
+const props = defineProps<{ emailRecord?: { id: number; department: string; email: string; password?: string | null; person_in_charge: string; position: string } | null }>();
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -23,7 +23,7 @@ const breadcrumbs = [
 const form = reactive({
   department: props.emailRecord?.department || '',
   email: props.emailRecord?.email || '',
-  password: '',
+  password: props.emailRecord?.password || '',
   person_in_charge: props.emailRecord?.person_in_charge || '',
   position: props.emailRecord?.position || '',
 });
@@ -127,8 +127,8 @@ const isEdit = computed(() => !!props.emailRecord?.id);
               <p v-if="errors.email" class="text-xs text-red-600">{{ errors.email }}</p>
             </div>
             <div class="space-y-2">
-              <Label>Password {{ isEdit ? '(leave blank to keep)' : '*' }}</Label>
-              <Input v-model="form.password" type="password" placeholder="Secure password" maxlength="255" aria-invalid="!!errors.password" />
+              <Label>Password {{ isEdit ? '' : '*' }}</Label>
+              <Input v-model="form.password" type="text" placeholder="Enter password (visible)" maxlength="255" aria-invalid="!!errors.password" autocomplete="off" spellcheck="false" />
               <p v-if="errors.password" class="text-xs text-red-600">{{ errors.password }}</p>
             </div>
             <div class="space-y-2">
@@ -152,4 +152,3 @@ const isEdit = computed(() => !!props.emailRecord?.id);
     </div>
   </AppLayout>
 </template>
-

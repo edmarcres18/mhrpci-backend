@@ -66,8 +66,24 @@ class EmailController extends Controller
 
     public function formPage(?Email $email = null)
     {
+        if ($email) {
+            $password = null;
+            try { $password = $email->password ? Crypt::decryptString($email->password) : null; }
+            catch (\Throwable $e) { $password = $email->password; }
+            return Inertia::render('Emails/EmailForm', [
+                'emailRecord' => [
+                    'id' => $email->id,
+                    'department' => $email->department,
+                    'email' => $email->email,
+                    'password' => $password,
+                    'person_in_charge' => $email->person_in_charge,
+                    'position' => $email->position,
+                ],
+            ]);
+        }
+
         return Inertia::render('Emails/EmailForm', [
-            'emailRecord' => $email,
+            'emailRecord' => null,
         ]);
     }
 
