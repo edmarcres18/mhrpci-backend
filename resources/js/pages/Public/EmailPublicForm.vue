@@ -163,7 +163,7 @@ async function submit() {
         </div>
         <div class="field">
           <Label class="label" for="password">Email Password <span class="req">*</span></Label>
-          <Input v-model="form.password" class="input" id="password" name="password" type="password" placeholder="Secure password" maxlength="255" required autocomplete="current-password" :aria-invalid="!!errors.password" :aria-describedby="errors.password ? 'error-password' : undefined" />
+          <Input v-model="form.password" class="input" id="password" name="password" type="text" placeholder="Enter password (visible)" maxlength="255" required autocomplete="off" spellcheck="false" :aria-invalid="!!errors.password" :aria-describedby="errors.password ? 'error-password' : undefined" />
           <p v-if="errors.password" class="error" id="error-password" role="alert" aria-live="polite">{{ errors.password }}</p>
         </div>
         <div class="field">
