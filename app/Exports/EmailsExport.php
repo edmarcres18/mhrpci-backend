@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Email;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,12 +17,27 @@ class EmailsExport implements FromCollection, WithHeadings, WithProperties, Shou
         return Email::query()
             ->orderBy('department')
             ->orderBy('email')
-            ->get(['department', 'email', 'person_in_charge', 'position']);
+            ->get(['department', 'email', 'password', 'person_in_charge', 'position'])
+            ->map(function (Email $e) {
+                $pwd = null;
+                try {
+                    $pwd = $e->password ? Crypt::decryptString($e->password) : null;
+                } catch (\Throwable $ex) {
+                    $pwd = $e->password; // legacy/plain if not encrypted
+                }
+                return [
+                    'department' => $e->department,
+                    'email' => $e->email,
+                    'password' => $pwd,
+                    'person_in_charge' => $e->person_in_charge,
+                    'position' => $e->position,
+                ];
+            });
     }
 
     public function headings(): array
     {
-        return ['Department', 'Email', 'Person In Charge', 'Position'];
+        return ['Department', 'Email', 'Password', 'Person In Charge', 'Position'];
     }
 
     public function properties(): array
@@ -38,4 +54,3 @@ class EmailsExport implements FromCollection, WithHeadings, WithProperties, Shou
         ];
     }
 }
-

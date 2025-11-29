@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Plus, Upload, Trash2, PencilLine, RefreshCw, Search } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Plus, Upload, Trash2, PencilLine, RefreshCw, Search, Eye } from 'lucide-vue-next';
 
 type ToastType = 'success' | 'error';
 
@@ -177,6 +177,7 @@ onMounted(fetchItems);
                 <td class="px-4 py-3">{{ e.extension || '' }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-end gap-2">
+                    <Link :href="`/company-phones/${e.id}`"><Button variant="ghost" size="icon" class="h-9 w-9"><Eye class="size-4" /><span class="sr-only">View</span></Button></Link>
                     <Link :href="`/company-phones/${e.id}/edit`"><Button variant="ghost" size="icon" class="h-9 w-9"><PencilLine class="size-4" /><span class="sr-only">Edit</span></Button></Link>
                     <Button variant="destructive" size="icon" class="h-9 w-9" @click="deleteItem(e.id)"><Trash2 class="size-4" /><span class="sr-only">Delete</span></Button>
                   </div>
@@ -207,4 +208,3 @@ onMounted(fetchItems);
     </div>
   </AppLayout>
 </template>
-

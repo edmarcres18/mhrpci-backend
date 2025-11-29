@@ -7,6 +7,7 @@ use App\Models\Email;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -47,7 +48,7 @@ class EmailController extends Controller
         }
 
         $data = $validator->validated();
-        $data['password'] = Hash::make($data['password']);
+        $data['password'] = Crypt::encryptString($data['password']);
 
         $item = Email::create($data);
 
@@ -67,6 +68,29 @@ class EmailController extends Controller
     {
         return Inertia::render('Emails/EmailForm', [
             'emailRecord' => $email,
+        ]);
+    }
+
+    public function showPage(Email $email)
+    {
+        $password = null;
+        try {
+            $password = $email->password ? Crypt::decryptString($email->password) : null;
+        } catch (\Throwable $e) {
+            $password = $email->password; // legacy/plain if not encrypted
+        }
+
+        return Inertia::render('Emails/Show', [
+            'email' => [
+                'id' => $email->id,
+                'department' => $email->department,
+                'email' => $email->email,
+                'password' => $password,
+                'person_in_charge' => $email->person_in_charge,
+                'position' => $email->position,
+                'created_at' => optional($email->created_at)->toDateTimeString(),
+                'updated_at' => optional($email->updated_at)->toDateTimeString(),
+            ],
         ]);
     }
 
@@ -121,7 +145,7 @@ class EmailController extends Controller
         }
 
         $data = $validator->validated();
-        $data['password'] = Hash::make($data['password']);
+        $data['password'] = Crypt::encryptString($data['password']);
 
         $item = Email::create($data);
 
@@ -144,7 +168,7 @@ class EmailController extends Controller
 
         $data = $validator->validated();
         if (isset($data['password']) && $data['password'] !== '') {
-            $data['password'] = Hash::make($data['password']);
+            $data['password'] = Crypt::encryptString($data['password']);
         } else {
             unset($data['password']);
         }
@@ -185,7 +209,7 @@ class EmailController extends Controller
                 ['email' => (string) $email],
                 [
                     'department' => (string) $department,
-                    'password' => Hash::make((string) $password),
+                    'password' => Crypt::encryptString((string) $password),
                     'person_in_charge' => (string) $person,
                     'position' => (string) $position,
                 ]

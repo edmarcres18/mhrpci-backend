@@ -26,10 +26,11 @@
             border: 1px solid #D1D5DB;
         }
         tbody tr:nth-child(even) { background: #F9FAFB; }
-        .col-dept { width: 24%; }
-        .col-email { width: 28%; }
-        .col-person { width: 28%; }
-        .col-position { width: 20%; }
+        .col-dept { width: 22%; }
+        .col-email { width: 24%; }
+        .col-password { width: 18%; }
+        .col-person { width: 20%; }
+        .col-position { width: 16%; }
         .footer { position: fixed; bottom: 10px; left: 0; right: 0; text-align: right; font-size: 11px; color: #6B7280; }
     </style>
 </head>
@@ -48,6 +49,7 @@
             <tr>
                 <th class="col-dept">Department</th>
                 <th class="col-email">Email</th>
+                <th class="col-password">Password</th>
                 <th class="col-person">Person In Charge</th>
                 <th class="col-position">Position</th>
             </tr>
@@ -57,6 +59,14 @@
                 <tr>
                     <td class="col-dept">{{ $item->department }}</td>
                     <td class="col-email">{{ $item->email }}</td>
+                    <td class="col-password">
+                        @php
+                            $pwd = null;
+                            try { $pwd = $item->password ? Illuminate\Support\Facades\Crypt::decryptString($item->password) : null; }
+                            catch (\Throwable $e) { $pwd = $item->password; }
+                        @endphp
+                        {{ $pwd }}
+                    </td>
                     <td class="col-person">{{ $item->person_in_charge }}</td>
                     <td class="col-position">{{ $item->position }}</td>
                 </tr>
@@ -77,4 +87,3 @@
     </script>
 </body>
 </html>
-

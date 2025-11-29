@@ -123,12 +123,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Company Phones Pages
     Route::get('company-phones', [CompanyPhoneController::class, 'page'])->name('company-phones.page');
+    Route::get('company-phones/{companyPhone}', [CompanyPhoneController::class, 'showPage'])->name('company-phones.show');
     Route::get('company-phones/create', [CompanyPhoneController::class, 'formPage'])->name('company-phones.create');
     Route::get('company-phones/{companyPhone}/edit', [CompanyPhoneController::class, 'formPage'])->name('company-phones.edit');
     Route::get('company-phones/import', [CompanyPhoneController::class, 'importPage'])->name('company-phones.import');
 
     // Emails Pages
     Route::get('emails', [EmailController::class, 'page'])->name('emails.page');
+    Route::get('emails/{email}', [EmailController::class, 'showPage'])->middleware(EnsureUserHasAdminPrivileges::class)->name('emails.show');
     Route::get('emails/create', [EmailController::class, 'formPage'])->name('emails.create');
     Route::get('emails/{email}/edit', [EmailController::class, 'formPage'])->name('emails.edit');
     Route::get('emails/import', [EmailController::class, 'importPage'])->name('emails.import');
@@ -171,8 +173,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/import', [EmailController::class, 'importExcel'])->name('api.emails.import');
         });
 
-        Route::get('/export/excel', [EmailController::class, 'exportExcel'])->name('api.emails.export.excel');
-        Route::get('/export/pdf', [EmailController::class, 'exportPDF'])->name('api.emails.export.pdf');
+        Route::get('/export/excel', [EmailController::class, 'exportExcel'])->middleware(EnsureUserHasAdminPrivileges::class)->name('api.emails.export.excel');
+        Route::get('/export/pdf', [EmailController::class, 'exportPDF'])->middleware(EnsureUserHasAdminPrivileges::class)->name('api.emails.export.pdf');
     });
 
     // Company Phones API

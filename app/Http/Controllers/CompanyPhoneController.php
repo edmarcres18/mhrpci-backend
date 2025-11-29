@@ -57,6 +57,22 @@ class CompanyPhoneController extends Controller
         ]);
     }
 
+    public function showPage(CompanyPhone $companyPhone)
+    {
+        return Inertia::render('CompanyPhones/Show', [
+            'phone' => [
+                'id' => $companyPhone->id,
+                'department' => $companyPhone->department,
+                'phone_number' => $companyPhone->phone_number,
+                'person_in_charge' => $companyPhone->person_in_charge,
+                'position' => $companyPhone->position,
+                'extension' => $companyPhone->extension,
+                'created_at' => optional($companyPhone->created_at)->toDateTimeString(),
+                'updated_at' => optional($companyPhone->updated_at)->toDateTimeString(),
+            ],
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $search = (string) $request->get('search', '');
