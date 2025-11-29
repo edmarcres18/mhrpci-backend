@@ -13,12 +13,13 @@
         .rule { height: 2px; background: #E5E7EB; margin: 8px 0 12px; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #9CA3AF; }
         thead th {
-            background: #F3F4F6;
-            color: #111827;
+            background: #111827;
+            color: #FFFFFF;
             font-weight: 700;
             text-align: left;
-            padding: 8px 10px;
-            border: 1px solid #D1D5DB;
+            padding: 10px 12px;
+            border: 1px solid #1F2937;
+            letter-spacing: 0.02em;
         }
         tbody td {
             padding: 8px 10px;
