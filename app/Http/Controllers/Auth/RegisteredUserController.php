@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use App\UserRole;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,7 +39,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(RegisterRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         // Get invitation from request (set by ValidateInvitation middleware)
         $invitation = $request->input('invitation');
@@ -49,7 +49,11 @@ class RegisteredUserController extends Controller
                 ->withErrors(['error' => 'Invalid invitation.']);
         }
 
-        // Validation handled by RegisterRequest
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
 
         // Validate that the email matches the invitation
         if (strtolower($request->email) !== strtolower($invitation->email)) {
