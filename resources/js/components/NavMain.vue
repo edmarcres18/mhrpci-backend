@@ -11,16 +11,45 @@ import {
     SidebarMenuAction,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { urlIsActive } from '@/lib/utils';
+import { toUrl, urlIsActive } from '@/lib/utils';
 import { type NavGroup } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ChevronDown } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
 
 defineProps<{
     groups: NavGroup[];
 }>();
 
 const page = usePage();
+
+const LS_KEY = 'navTreeOpenMap';
+const openMap = ref<Record<string, boolean>>({});
+
+onMounted(() => {
+    try {
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved) {
+            openMap.value = JSON.parse(saved) || {};
+        }
+    } catch {}
+});
+
+const setOpen = (key: string, open: boolean) => {
+    openMap.value = { ...openMap.value, [key]: open };
+    try {
+        localStorage.setItem(LS_KEY, JSON.stringify(openMap.value));
+    } catch {}
+};
+
+const childrenActive = (item: NavGroup['items'][number]) =>
+    item.children?.some((child) => urlIsActive(child.href, page.url)) ?? false;
+
+const treeKey = (group: NavGroup, idx: number, item: NavGroup['items'][number]) =>
+    `${group.label ?? idx}:${toUrl(item.href)}`;
+
+const isOpen = (key: string, item: NavGroup['items'][number]) =>
+    openMap.value[key] ?? (childrenActive(item) ? true : false);
 </script>
 
 <template>
@@ -31,7 +60,8 @@ const page = usePage();
                 <template v-if="item.children && item.children.length">
                     <Collapsible
                         v-slot="{ open }"
-                        :default-open="item.children.some((child) => urlIsActive(child.href, page.url))"
+                        :open="isOpen(treeKey(group, idx, item), item)"
+                        @update:open="(val) => setOpen(treeKey(group, idx, item), val)"
                     >
                         <SidebarMenuButton
                             as-child
