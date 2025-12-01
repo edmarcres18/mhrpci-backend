@@ -65,8 +65,6 @@ const formDefaults = computed(() => ({
                         autocomplete="email"
                         :value="props.invitationEmail"
                         readonly
-                        disabled
-                        class="bg-muted cursor-not-allowed opacity-70"
                     />
                     <Input
                         v-else
@@ -79,6 +77,9 @@ const formDefaults = computed(() => ({
                         placeholder="email@example.com"
                     />
                     <InputError :message="errors.email" />
+                    <p v-if="props.invitationEmail" class="text-xs text-muted-foreground">
+                        This email is pre-filled based on your invitation and cannot be changed.
+                    </p>
                 </div>
 
                 <div class="grid gap-2">
