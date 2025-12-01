@@ -63,7 +63,7 @@ const formDefaults = computed(() => ({
                         type="email"
                         :tabindex="2"
                         autocomplete="email"
-                        :value="props.invitationEmail"
+                        :modelValue="props.invitationEmail"
                         readonly
                     />
                     <Input
