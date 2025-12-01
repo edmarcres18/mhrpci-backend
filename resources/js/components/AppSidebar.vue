@@ -45,7 +45,7 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     icon: Users,
                 },
                 {
-                    title: 'Company Phones',
+                    title: 'Company Number',
                     href: '/company-phones',
                     icon: Phone,
                 },
