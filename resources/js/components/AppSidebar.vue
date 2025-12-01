@@ -45,24 +45,31 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     icon: Users,
                 },
                 {
-                    title: 'Company Number',
-                    href: '/company-phones',
-                    icon: Phone,
-                },
-                {
-                    title: 'Emails',
-                    href: '/emails',
-                    icon: Mail,
-                },
-                {
-                    title: 'IT Inventories',
+                    title: 'Company Inventories',
                     href: '/inventories',
-                    icon: Box,
-                },
-                {
-                    title: 'IT Consumables',
-                    href: '/consumables',
                     icon: Boxes,
+                    children: [
+                        {
+                            title: 'Company Number',
+                            href: '/company-phones',
+                            icon: Phone,
+                        },
+                        {
+                            title: 'Emails',
+                            href: '/emails',
+                            icon: Mail,
+                        },
+                        {
+                            title: 'IT Inventories',
+                            href: '/inventories',
+                            icon: Box,
+                        },
+                        {
+                            title: 'IT Consumables',
+                            href: '/consumables',
+                            icon: Boxes,
+                        },
+                    ],
                 },
             ],
         });
