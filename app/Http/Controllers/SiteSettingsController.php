@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\SiteInformation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,7 +51,7 @@ class SiteSettingsController extends Controller
         }
 
         $siteInfo = SiteInformation::first();
-        
+
         // Prepare data for update/create
         $data = [
             'site_name' => $request->site_name,
@@ -100,7 +100,7 @@ class SiteSettingsController extends Controller
         if ($siteInfo && $siteInfo->site_logo) {
             // Delete the logo file
             Storage::delete($siteInfo->site_logo);
-            
+
             // Update the record
             $siteInfo->update(['site_logo' => null]);
 
@@ -151,8 +151,6 @@ class SiteSettingsController extends Controller
      * Fetch site name and logo for public use.
      * Used by auth pages and sidebar.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchSiteSettings(): JsonResponse
     {
@@ -162,11 +160,11 @@ class SiteSettingsController extends Controller
 
             $settings = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
-                
+
                 return [
                     'site_name' => $siteInfo?->site_name ?? 'Laravel Starter Kit',
-                    'site_logo' => $siteInfo?->site_logo 
-                        ? Storage::url($siteInfo->site_logo) 
+                    'site_logo' => $siteInfo?->site_logo
+                        ? Storage::url($siteInfo->site_logo)
                         : null,
                 ];
             });
@@ -180,7 +178,7 @@ class SiteSettingsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Site Settings Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Site Settings Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 

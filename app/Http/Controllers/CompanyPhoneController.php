@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Exports\CompanyPhonesExport;
 use App\Models\CompanyPhone;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class CompanyPhoneController extends Controller
 {
@@ -40,6 +40,7 @@ class CompanyPhoneController extends Controller
 
         return response()->json(['success' => true, 'data' => $item], 201);
     }
+
     public function page()
     {
         return Inertia::render('CompanyPhones/CompanyPhoneList');
@@ -79,7 +80,7 @@ class CompanyPhoneController extends Controller
         $department = (string) $request->get('department', '');
         $perPage = (int) $request->get('perPage', 10);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
@@ -133,7 +134,7 @@ class CompanyPhoneController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'department' => ['required', 'string', 'max:255'],
-            'phone_number' => ['required', 'string', 'regex:/^\+639\d{10}$/', 'unique:company_phones,phone_number,' . $companyPhone->id],
+            'phone_number' => ['required', 'string', 'regex:/^\+639\d{10}$/', 'unique:company_phones,phone_number,'.$companyPhone->id],
             'person_in_charge' => ['required', 'string', 'max:255'],
             'position' => ['required', 'string', 'max:255'],
             'extension' => ['nullable', 'string', 'max:20'],
@@ -151,6 +152,7 @@ class CompanyPhoneController extends Controller
     public function destroy(CompanyPhone $companyPhone): JsonResponse
     {
         $companyPhone->delete();
+
         return response()->json(['success' => true]);
     }
 
@@ -171,10 +173,10 @@ class CompanyPhoneController extends Controller
             $person = $row[2] ?? null;
             $position = $row[3] ?? null;
             $extension = $row[4] ?? null;
-            if (!$phone || !$department || !$person || !$position) {
+            if (! $phone || ! $department || ! $person || ! $position) {
                 continue;
             }
-            if (!preg_match('/^\+639\d{10}$/', (string) $phone)) {
+            if (! preg_match('/^\+639\d{10}$/', (string) $phone)) {
                 continue;
             }
             CompanyPhone::updateOrCreate(
@@ -196,7 +198,8 @@ class CompanyPhoneController extends Controller
         $year = now()->format('Y');
         $createdAt = now()->format('Y-m-d_His');
         $fileName = "CompanyPhones_{$year}_{$createdAt}.xlsx";
-        return Excel::download(new CompanyPhonesExport(), $fileName);
+
+        return Excel::download(new CompanyPhonesExport, $fileName);
     }
 
     public function exportPDF()
@@ -206,6 +209,7 @@ class CompanyPhoneController extends Controller
             'items' => $items,
         ]);
         $ts = now()->format('Ymd_His');
+
         return $pdf->download("company_phones_{$ts}.pdf");
     }
 }

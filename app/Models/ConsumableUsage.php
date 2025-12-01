@@ -27,4 +27,3 @@ class ConsumableUsage extends Model
         return $this->belongsTo(Consumable::class);
     }
 }
-

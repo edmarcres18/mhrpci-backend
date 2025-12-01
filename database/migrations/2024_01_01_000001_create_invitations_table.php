@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('used')->default(false);
             $table->timestamp('expires_at');
             $table->timestamps();
-            
+
             $table->index(['token', 'used']);
             $table->index('email');
         });

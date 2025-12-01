@@ -3,22 +3,22 @@
 namespace App\Exports;
 
 use App\Models\Email;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Crypt;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithProperties;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class EmailsExport implements FromCollection, WithHeadings, WithProperties, ShouldAutoSize, WithStyles, WithEvents, WithTitle
+class EmailsExport implements FromCollection, ShouldAutoSize, WithEvents, WithHeadings, WithProperties, WithStyles, WithTitle
 {
     public function collection(): Collection
     {
@@ -33,6 +33,7 @@ class EmailsExport implements FromCollection, WithHeadings, WithProperties, Shou
                 } catch (\Throwable $ex) {
                     $pwd = $e->password; // legacy/plain if not encrypted
                 }
+
                 return [
                     'department' => $e->department,
                     'email' => $e->email,
@@ -87,12 +88,13 @@ class EmailsExport implements FromCollection, WithHeadings, WithProperties, Shou
 
     public function title(): string
     {
-        return 'Company Email ' . now()->format('Y') . ' exported';
+        return 'Company Email '.now()->format('Y').' exported';
     }
 
     public function properties(): array
     {
         $app = config('app.name');
+
         return [
             'creator' => $app,
             'lastModifiedBy' => $app,

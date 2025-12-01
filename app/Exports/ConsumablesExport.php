@@ -10,14 +10,15 @@ class ConsumablesExport implements WithMultipleSheets, WithProperties
     public function sheets(): array
     {
         return [
-            new ConsumablesSheet(),
-            new ConsumableUsagesSheet(),
+            new ConsumablesSheet,
+            new ConsumableUsagesSheet,
         ];
     }
 
     public function properties(): array
     {
         $app = config('app.name');
+
         return [
             'creator' => $app,
             'lastModifiedBy' => $app,
@@ -29,4 +30,3 @@ class ConsumablesExport implements WithMultipleSheets, WithProperties
         ];
     }
 }
-

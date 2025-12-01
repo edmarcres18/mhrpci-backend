@@ -28,4 +28,3 @@ class DeletedConsumableResource extends JsonResource
         ];
     }
 }
-

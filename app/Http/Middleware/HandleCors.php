@@ -29,7 +29,7 @@ class HandleCors
 
         // Add APP_URL from environment if set
         $appUrl = config('app.url');
-        if ($appUrl && !in_array($appUrl, $allowedOrigins)) {
+        if ($appUrl && ! in_array($appUrl, $allowedOrigins)) {
             $allowedOrigins[] = $appUrl;
         }
 

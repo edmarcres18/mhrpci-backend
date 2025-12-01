@@ -17,4 +17,3 @@ class CompanyPhone extends Model
         'extension',
     ];
 }
-

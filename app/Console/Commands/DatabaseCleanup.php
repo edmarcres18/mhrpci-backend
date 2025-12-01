@@ -30,9 +30,10 @@ class DatabaseCleanup extends Command
 
         $days = (int) $this->option('days');
         $backupPath = $this->getBackupStoragePath();
-        
-        if (!File::exists($backupPath)) {
+
+        if (! File::exists($backupPath)) {
             $this->warn('No backup directory found.');
+
             return Command::SUCCESS;
         }
 
@@ -46,13 +47,13 @@ class DatabaseCleanup extends Command
                 $totalSize += $file->getSize();
                 File::delete($file->getPathname());
                 $deletedCount++;
-                $this->line("  - Deleted: " . $file->getFilename());
+                $this->line('  - Deleted: '.$file->getFilename());
             }
         }
 
         if ($deletedCount > 0) {
             $this->info("✓ Deleted {$deletedCount} backup(s) older than {$days} days");
-            $this->info("✓ Freed up " . $this->formatBytes($totalSize) . " of disk space");
+            $this->info('✓ Freed up '.$this->formatBytes($totalSize).' of disk space');
         } else {
             $this->info('No old backups to clean up.');
         }
@@ -65,7 +66,7 @@ class DatabaseCleanup extends Command
      */
     private function getBackupStoragePath(): string
     {
-        return storage_path('app' . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . 'database');
+        return storage_path('app'.DIRECTORY_SEPARATOR.'backups'.DIRECTORY_SEPARATOR.'database');
     }
 
     /**
@@ -74,11 +75,11 @@ class DatabaseCleanup extends Command
     private function formatBytes(int $bytes, int $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, $precision) . ' ' . $units[$i];
+
+        return round($bytes, $precision).' '.$units[$i];
     }
 }

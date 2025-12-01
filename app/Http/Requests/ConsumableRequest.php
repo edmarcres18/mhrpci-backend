@@ -23,4 +23,3 @@ class ConsumableRequest extends FormRequest
         ];
     }
 }
-

@@ -42,18 +42,19 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         $user = $request->user();
-        
+
         // Cache site settings for 1 hour
         $siteSettings = Cache::remember('site_info_settings', 3600, function () {
             $siteInfo = SiteInformation::first();
+
             return [
                 'site_name' => $siteInfo?->site_name ?? 'Laravel Starter Kit',
-                'site_logo' => $siteInfo?->site_logo 
-                    ? Storage::url($siteInfo->site_logo) 
+                'site_logo' => $siteInfo?->site_logo
+                    ? Storage::url($siteInfo->site_logo)
                     : null,
             ];
         });
-        
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),

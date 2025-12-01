@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Invitation;
+use App\Models\User;
 use App\UserRole;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -44,7 +44,7 @@ class RegisteredUserController extends Controller
         // Get invitation from request (set by ValidateInvitation middleware)
         $invitation = $request->input('invitation');
 
-        if (!$invitation instanceof Invitation) {
+        if (! $invitation instanceof Invitation) {
             return redirect()->route('login')
                 ->withErrors(['error' => 'Invalid invitation.']);
         }
@@ -62,7 +62,7 @@ class RegisteredUserController extends Controller
 
         // Create user with the role specified in the invitation
         $invitedRole = UserRole::tryFrom($invitation->role) ?? UserRole::STAFF;
-        
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

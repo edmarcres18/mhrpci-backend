@@ -24,4 +24,3 @@ class Consumable extends Model
         return $this->hasMany(ConsumableUsage::class);
     }
 }
-

@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Consumable;
-use App\Models\ConsumableLog;
+use App\Models\User;
 use App\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -38,4 +37,3 @@ class ConsumablesUsageLogTest extends TestCase
         $this->assertDatabaseHas('consumable_logs', ['consumable_id' => $c->id, 'action' => 'usage']);
     }
 }
-

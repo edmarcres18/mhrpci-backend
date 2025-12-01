@@ -32,8 +32,8 @@ class DatabaseBackup extends Command
         try {
             // Create backup using the controller's logic
             $backupPath = $this->createBackup();
-            
-            $this->info("✓ Backup created successfully: " . basename($backupPath));
+
+            $this->info('✓ Backup created successfully: '.basename($backupPath));
 
             // Clean old backups if specified
             $keepDays = (int) $this->option('keep-days');
@@ -43,7 +43,8 @@ class DatabaseBackup extends Command
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Backup failed: ' . $e->getMessage());
+            $this->error('Backup failed: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }
@@ -54,19 +55,19 @@ class DatabaseBackup extends Command
     private function createBackup(): string
     {
         $backupPath = $this->getBackupStoragePath();
-        
-        if (!File::exists($backupPath)) {
+
+        if (! File::exists($backupPath)) {
             File::makeDirectory($backupPath, 0755, true);
         }
 
-        $filename = 'mhrpci_backup_' . date('y_m_d_His') . '.sql';
-        $filePath = $backupPath . DIRECTORY_SEPARATOR . $filename;
+        $filename = 'mhrpci_backup_'.date('y_m_d_His').'.sql';
+        $filePath = $backupPath.DIRECTORY_SEPARATOR.$filename;
 
         $connection = config('database.default');
         $dbConfig = config("database.connections.{$connection}");
 
         // Use reflection to access the controller's backup methods
-        $controller = new DatabaseBackupController();
+        $controller = new DatabaseBackupController;
         $reflection = new \ReflectionClass($controller);
 
         if ($dbConfig['driver'] === 'sqlite') {
@@ -82,7 +83,7 @@ class DatabaseBackup extends Command
             $method->setAccessible(true);
             $method->invoke($controller, $dbConfig, $filePath);
         } else {
-            throw new \Exception('Unsupported database driver: ' . $dbConfig['driver']);
+            throw new \Exception('Unsupported database driver: '.$dbConfig['driver']);
         }
 
         return $filePath;
@@ -94,8 +95,8 @@ class DatabaseBackup extends Command
     private function cleanOldBackups(int $keepDays): void
     {
         $backupPath = $this->getBackupStoragePath();
-        
-        if (!File::exists($backupPath)) {
+
+        if (! File::exists($backupPath)) {
             return;
         }
 
@@ -120,6 +121,6 @@ class DatabaseBackup extends Command
      */
     private function getBackupStoragePath(): string
     {
-        return storage_path('app' . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . 'database');
+        return storage_path('app'.DIRECTORY_SEPARATOR.'backups'.DIRECTORY_SEPARATOR.'database');
     }
 }

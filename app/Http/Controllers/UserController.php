@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Invitation;
-use App\UserRole;
+use App\Models\User;
 use App\Notifications\UserInvitation;
+use App\UserRole;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
-use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -23,24 +22,24 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
         $search = (string) $request->query('search', '');
         $perPage = (int) $request->query('perPage', 10);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
         $query = User::query();
-        
+
         // Admin users cannot see System Admin accounts
         if ($currentUser->isAdmin()) {
             $query->where('role', '!=', UserRole::SYSTEM_ADMIN->value);
         }
-        
+
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -79,7 +78,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -89,6 +88,7 @@ class UserController extends Controller
                 if ($currentUser->isAdmin() && $role === UserRole::SYSTEM_ADMIN) {
                     return false;
                 }
+
                 return true;
             })
             ->map(function ($role) {
@@ -112,7 +112,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -120,7 +120,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:' . implode(',', UserRole::values())],
+            'role' => ['required', 'string', 'in:'.implode(',', UserRole::values())],
         ]);
 
         // Admin users cannot create System Admin accounts
@@ -148,7 +148,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -178,7 +178,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -193,6 +193,7 @@ class UserController extends Controller
                 if ($currentUser->isAdmin() && $role === UserRole::SYSTEM_ADMIN) {
                     return false;
                 }
+
                 return true;
             })
             ->map(function ($role) {
@@ -222,7 +223,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -233,8 +234,8 @@ class UserController extends Controller
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'string', 'in:' . implode(',', UserRole::values())],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'role' => ['required', 'string', 'in:'.implode(',', UserRole::values())],
         ];
 
         // Only validate password if it's provided
@@ -275,7 +276,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can access user management
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access user management.');
         }
 
@@ -308,7 +309,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can send invitations
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to send invitations.');
         }
 
@@ -318,6 +319,7 @@ class UserController extends Controller
                 if ($currentUser->isAdmin() && $role === UserRole::SYSTEM_ADMIN) {
                     return false;
                 }
+
                 return true;
             })
             ->map(function ($role) {
@@ -341,13 +343,13 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can send invitations
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to send invitations.');
         }
 
         $validated = $request->validate([
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:' . implode(',', UserRole::values())],
+            'role' => ['required', 'string', 'in:'.implode(',', UserRole::values())],
         ]);
 
         // Admin users cannot invite System Admin accounts
@@ -380,7 +382,7 @@ class UserController extends Controller
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'Invitation sent successfully to ' . $validated['email']);
+            ->with('success', 'Invitation sent successfully to '.$validated['email']);
     }
 
     /**
@@ -390,14 +392,14 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can view invitations
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to view invitations.');
         }
 
         $search = (string) $request->query('search', '');
         $perPage = (int) $request->query('perPage', 10);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
@@ -413,6 +415,7 @@ class UserController extends Controller
             ->withQueryString()
             ->through(function ($invitation) {
                 $role = UserRole::tryFrom($invitation->role);
+
                 return [
                     'id' => $invitation->id,
                     'email' => $invitation->email,
@@ -443,7 +446,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can resend invitations
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to resend invitations.');
         }
 
@@ -472,7 +475,7 @@ class UserController extends Controller
     {
         // Only Admin and System Admin can cancel invitations
         $currentUser = auth()->user();
-        if (!$currentUser || !$currentUser->hasAdminPrivileges()) {
+        if (! $currentUser || ! $currentUser->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to cancel invitations.');
         }
 

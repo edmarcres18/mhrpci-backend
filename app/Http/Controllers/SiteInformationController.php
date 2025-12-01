@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SiteInformation;
 use App\Http\Requests\SiteInformationRequest;
+use App\Models\SiteInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -87,8 +87,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch physical address from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchAddress(): JsonResponse
     {
@@ -98,10 +96,11 @@ class SiteInformationController extends Controller
 
             $address = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->address;
             });
 
-            if (!$address) {
+            if (! $address) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -120,7 +119,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Address Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Address Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -134,8 +133,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch email address from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchEmail(): JsonResponse
     {
@@ -145,10 +142,11 @@ class SiteInformationController extends Controller
 
             $email = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->email_address;
             });
 
-            if (!$email) {
+            if (! $email) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -167,7 +165,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Email Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Email Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -181,8 +179,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch telephone number from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchTelNo(): JsonResponse
     {
@@ -192,10 +188,11 @@ class SiteInformationController extends Controller
 
             $telNo = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->tel_no;
             });
 
-            if (!$telNo) {
+            if (! $telNo) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -214,7 +211,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Tel No Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Tel No Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -228,8 +225,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch phone number from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchPhoneNo(): JsonResponse
     {
@@ -239,10 +234,11 @@ class SiteInformationController extends Controller
 
             $phoneNo = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->phone_no;
             });
 
-            if (!$phoneNo) {
+            if (! $phoneNo) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -261,7 +257,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Phone No Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Phone No Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -275,8 +271,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch Telegram handle from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchTelegram(): JsonResponse
     {
@@ -286,10 +280,11 @@ class SiteInformationController extends Controller
 
             $telegram = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->telegram;
             });
 
-            if (!$telegram) {
+            if (! $telegram) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -305,12 +300,12 @@ class SiteInformationController extends Controller
                 'data' => [
                     'telegram' => $telegram,
                     'type' => 'telegram',
-                    'url' => 'https://t.me/' . ltrim($telegram, '@'),
+                    'url' => 'https://t.me/'.ltrim($telegram, '@'),
                 ],
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Telegram Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Telegram Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -324,8 +319,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch Facebook handle/URL from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchFacebook(): JsonResponse
     {
@@ -335,10 +328,11 @@ class SiteInformationController extends Controller
 
             $facebook = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->facebook;
             });
 
-            if (!$facebook) {
+            if (! $facebook) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -350,9 +344,9 @@ class SiteInformationController extends Controller
             }
 
             // Check if it's already a full URL
-            $url = filter_var($facebook, FILTER_VALIDATE_URL) 
-                ? $facebook 
-                : 'https://facebook.com/' . ltrim($facebook, '@/');
+            $url = filter_var($facebook, FILTER_VALIDATE_URL)
+                ? $facebook
+                : 'https://facebook.com/'.ltrim($facebook, '@/');
 
             return response()->json([
                 'success' => true,
@@ -364,7 +358,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Facebook Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Facebook Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -378,8 +372,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch Viber handle from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchViber(): JsonResponse
     {
@@ -389,10 +381,11 @@ class SiteInformationController extends Controller
 
             $viber = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->viber;
             });
 
-            if (!$viber) {
+            if (! $viber) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -408,12 +401,12 @@ class SiteInformationController extends Controller
                 'data' => [
                     'viber' => $viber,
                     'type' => 'viber',
-                    'url' => 'viber://chat?number=' . preg_replace('/[^0-9+]/', '', $viber),
+                    'url' => 'viber://chat?number='.preg_replace('/[^0-9+]/', '', $viber),
                 ],
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API Viber Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API Viber Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -427,8 +420,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch WhatsApp number from site information.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchWhatsapp(): JsonResponse
     {
@@ -438,10 +429,11 @@ class SiteInformationController extends Controller
 
             $whatsapp = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
+
                 return $siteInfo?->whatsapp;
             });
 
-            if (!$whatsapp) {
+            if (! $whatsapp) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -460,12 +452,12 @@ class SiteInformationController extends Controller
                 'data' => [
                     'whatsapp' => $whatsapp,
                     'type' => 'whatsapp',
-                    'url' => 'https://wa.me/' . $cleanNumber,
+                    'url' => 'https://wa.me/'.$cleanNumber,
                 ],
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API WhatsApp Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API WhatsApp Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -479,8 +471,6 @@ class SiteInformationController extends Controller
     /**
      * Fetch all contact information at once.
      * Cached for 1 hour for performance.
-     *
-     * @return JsonResponse
      */
     public function fetchAllContacts(): JsonResponse
     {
@@ -490,8 +480,8 @@ class SiteInformationController extends Controller
 
             $contacts = Cache::remember($cacheKey, $cacheDuration, function () {
                 $siteInfo = SiteInformation::first();
-                
-                if (!$siteInfo) {
+
+                if (! $siteInfo) {
                     return null;
                 }
 
@@ -534,16 +524,16 @@ class SiteInformationController extends Controller
                     $data['telegram'] = [
                         'value' => $siteInfo->telegram,
                         'type' => 'telegram',
-                        'url' => 'https://t.me/' . ltrim($siteInfo->telegram, '@'),
+                        'url' => 'https://t.me/'.ltrim($siteInfo->telegram, '@'),
                     ];
                 }
 
                 // Facebook
                 if ($siteInfo->facebook) {
-                    $url = filter_var($siteInfo->facebook, FILTER_VALIDATE_URL) 
-                        ? $siteInfo->facebook 
-                        : 'https://facebook.com/' . ltrim($siteInfo->facebook, '@/');
-                    
+                    $url = filter_var($siteInfo->facebook, FILTER_VALIDATE_URL)
+                        ? $siteInfo->facebook
+                        : 'https://facebook.com/'.ltrim($siteInfo->facebook, '@/');
+
                     $data['facebook'] = [
                         'value' => $siteInfo->facebook,
                         'type' => 'facebook',
@@ -556,7 +546,7 @@ class SiteInformationController extends Controller
                     $data['viber'] = [
                         'value' => $siteInfo->viber,
                         'type' => 'viber',
-                        'url' => 'viber://chat?number=' . preg_replace('/[^0-9+]/', '', $siteInfo->viber),
+                        'url' => 'viber://chat?number='.preg_replace('/[^0-9+]/', '', $siteInfo->viber),
                     ];
                 }
 
@@ -566,14 +556,14 @@ class SiteInformationController extends Controller
                     $data['whatsapp'] = [
                         'value' => $siteInfo->whatsapp,
                         'type' => 'whatsapp',
-                        'url' => 'https://wa.me/' . $cleanNumber,
+                        'url' => 'https://wa.me/'.$cleanNumber,
                     ];
                 }
 
                 return $data;
             });
 
-            if (!$contacts || empty($contacts)) {
+            if (! $contacts || empty($contacts)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No contact information configured',
@@ -591,7 +581,7 @@ class SiteInformationController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('API All Contacts Fetch Error: ' . $e->getMessage(), [
+            \Log::error('API All Contacts Fetch Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 

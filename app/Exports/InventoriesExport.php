@@ -33,6 +33,7 @@ class InventoriesExport implements WithMultipleSheets, WithProperties
     public function properties(): array
     {
         $appName = config('app.name');
+
         return [
             'creator' => $appName,
             'lastModifiedBy' => $appName,

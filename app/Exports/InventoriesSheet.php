@@ -5,18 +5,18 @@ namespace App\Exports;
 use App\Models\Inventory;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithEvents, WithStyles, ShouldAutoSize
+class InventoriesSheet implements FromCollection, ShouldAutoSize, WithEvents, WithHeadings, WithStyles, WithTitle
 {
     protected string $accountable;
 
@@ -100,7 +100,7 @@ class InventoriesSheet implements FromCollection, WithTitle, WithHeadings, WithE
                             'horizontal' => Alignment::HORIZONTAL_LEFT,
                         ],
                     ]);
-                    
+
                     $sheet->getStyle("A2:D{$highestRow}")->getAlignment()->setWrapText(true);
 
                     for ($row = 2; $row <= $highestRow; $row++) {

@@ -3,16 +3,17 @@
 namespace App\Imports;
 
 use App\Models\Inventory;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Illuminate\Support\Collection;
 
 class InventoriesImport implements WithMultipleSheets
 {
     public function sheets(): array
     {
         return [
-            '*' => new class implements ToCollection {
+            '*' => new class implements ToCollection
+            {
                 public function collection(Collection $rows)
                 {
                     $accountable = request()->input('accountable') ?? (request()->attributes->get('sheetName'));
@@ -23,7 +24,7 @@ class InventoriesImport implements WithMultipleSheets
                         $brand = data_get($row, 2);
                         $status = data_get($row, 3) ?: 'active';
 
-                        if (!$name) {
+                        if (! $name) {
                             continue;
                         }
 
@@ -36,8 +37,7 @@ class InventoriesImport implements WithMultipleSheets
                         ]);
                     }
                 }
-            }
+            },
         ];
     }
 }
-

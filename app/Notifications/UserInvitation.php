@@ -36,11 +36,11 @@ class UserInvitation extends Notification
         $expiresAt = $this->invitation->expires_at->format('F j, Y \a\t g:i A');
         $expiresIn = $this->invitation->expires_at->diffForHumans();
         $appName = config('app.name');
-        
+
         // Get role display name
         $role = \App\UserRole::tryFrom($this->invitation->role);
         $roleDisplay = $role ? $role->displayName() : 'Staff';
-        
+
         // Get inviter name
         $inviterName = $this->invitation->invitedBy->name ?? 'Your administrator';
 
@@ -55,7 +55,7 @@ class UserInvitation extends Notification
         ];
 
         return (new MailMessage)
-            ->subject('🎉 Welcome to ' . $appName . ' - Account Invitation')
+            ->subject('🎉 Welcome to '.$appName.' - Account Invitation')
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->replyTo(config('mail.from.address'), config('mail.from.name'))
             ->priority(1)

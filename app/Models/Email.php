@@ -17,4 +17,3 @@ class Email extends Model
         'position',
     ];
 }
-

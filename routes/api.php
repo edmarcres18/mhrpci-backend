@@ -1,10 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -17,11 +16,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/email', [SiteInformationController::class, 'fetchEmail'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.email');
-        
+
         Route::get('/tel', [SiteInformationController::class, 'fetchTelNo'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.tel');
-        
+
         Route::get('/phone', [SiteInformationController::class, 'fetchPhoneNo'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.phone');
@@ -29,23 +28,23 @@ Route::prefix('v1')->group(function () {
         Route::get('/address', [SiteInformationController::class, 'fetchAddress'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.address');
-        
+
         Route::get('/telegram', [SiteInformationController::class, 'fetchTelegram'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.telegram');
-        
+
         Route::get('/facebook', [SiteInformationController::class, 'fetchFacebook'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.facebook');
-        
+
         Route::get('/viber', [SiteInformationController::class, 'fetchViber'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.viber');
-        
+
         Route::get('/whatsapp', [SiteInformationController::class, 'fetchWhatsapp'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.whatsapp');
-        
+
         Route::get('/all', [SiteInformationController::class, 'fetchAllContacts'])
             ->middleware('throttle:120,1') // 120 requests per minute
             ->name('api.contacts.all');

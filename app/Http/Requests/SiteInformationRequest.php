@@ -26,19 +26,19 @@ class SiteInformationRequest extends FormRequest
                 'nullable',
                 'email:rfc,dns',
                 'max:255',
-                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
             ],
             'tel_no' => [
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/'
+                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/',
             ],
             'phone_no' => [
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/'
+                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/',
             ],
             'address' => [
                 'nullable',
@@ -49,25 +49,25 @@ class SiteInformationRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^@?[a-zA-Z0-9_]{5,32}$|^https?:\/\/(t\.me|telegram\.me)\/[a-zA-Z0-9_]{5,32}$/'
+                'regex:/^@?[a-zA-Z0-9_]{5,32}$|^https?:\/\/(t\.me|telegram\.me)\/[a-zA-Z0-9_]{5,32}$/',
             ],
             'facebook' => [
                 'nullable',
                 'string',
                 'max:255',
-                'regex:/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/[a-zA-Z0-9.]+\/?$|^[a-zA-Z0-9.]+$/'
+                'regex:/^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/[a-zA-Z0-9.]+\/?$|^[a-zA-Z0-9.]+$/',
             ],
             'viber' => [
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/'
+                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/',
             ],
             'whatsapp' => [
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/'
+                'regex:/^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/',
             ],
         ];
     }
@@ -82,19 +82,19 @@ class SiteInformationRequest extends FormRequest
         return [
             'email_address.email' => 'Please provide a valid email address.',
             'email_address.regex' => 'Email format is invalid.',
-            
+
             'tel_no.regex' => 'Please enter a valid telephone number (e.g., +1234567890 or 123-456-7890).',
-            
+
             'phone_no.regex' => 'Please enter a valid phone number (e.g., +1234567890 or 123-456-7890).',
 
             'address.max' => 'Address must not exceed 255 characters.',
-            
+
             'telegram.regex' => 'Please enter a valid Telegram username (e.g., @username or https://t.me/username).',
-            
+
             'facebook.regex' => 'Please enter a valid Facebook profile (e.g., facebook.com/username or just username).',
-            
+
             'viber.regex' => 'Please enter a valid Viber number (e.g., +1234567890 or 123-456-7890).',
-            
+
             'whatsapp.regex' => 'Please enter a valid WhatsApp number (e.g., +1234567890 or 123-456-7890).',
         ];
     }

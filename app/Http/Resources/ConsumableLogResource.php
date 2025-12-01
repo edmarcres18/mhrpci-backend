@@ -28,4 +28,3 @@ class ConsumableLogResource extends JsonResource
         ];
     }
 }
-

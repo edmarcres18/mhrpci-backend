@@ -17,4 +17,3 @@ class Inventory extends Model
         'inventory_status',
     ];
 }
-

@@ -2,11 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\SiteSetting;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
-use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +24,20 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->enforceHttps();
         $this->configureTrustedProxies();
+        date_default_timezone_set(config('app.timezone'));
+        $connection = config('database.default');
+        $driver = config("database.connections.{$connection}.driver");
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            try {
+                DB::statement("SET time_zone = '+08:00'");
+            } catch (\Throwable $e) {
+            }
+        } elseif ($driver === 'pgsql') {
+            try {
+                DB::statement("SET TIME ZONE 'Asia/Manila'");
+            } catch (\Throwable $e) {
+            }
+        }
     }
 
     /**

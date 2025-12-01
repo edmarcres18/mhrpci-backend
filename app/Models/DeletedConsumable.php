@@ -39,4 +39,3 @@ class DeletedConsumable extends Model
         return $this->belongsTo(Consumable::class, 'consumable_id');
     }
 }
-

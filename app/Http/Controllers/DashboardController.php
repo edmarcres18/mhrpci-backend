@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invitation;
 use App\Models\Inventory;
+use App\Models\Invitation;
 use App\Models\User;
 use App\UserRole;
 use Carbon\Carbon;
@@ -46,7 +46,7 @@ class DashboardController extends Controller
                     ->whereNotNull('role')
                     ->groupBy('role')
                     ->get();
-                
+
                 foreach ($roleData as $item) {
                     try {
                         $role = UserRole::from($item->role);
@@ -57,7 +57,7 @@ class DashboardController extends Controller
                     }
                 }
             } catch (\Throwable $e) {
-                \Log::warning('Error fetching users by role: ' . $e->getMessage());
+                \Log::warning('Error fetching users by role: '.$e->getMessage());
             }
 
             // Total invitations
@@ -80,7 +80,7 @@ class DashboardController extends Controller
                     'last_month' => $usersLastMonth,
                     'last_week' => $usersLastWeek,
                     'by_role' => $usersByRole,
-                    'growth_rate' => $totalUsers > 0 
+                    'growth_rate' => $totalUsers > 0
                         ? round(($usersLastMonth / max($totalUsers - $usersLastMonth, 1)) * 100, 1)
                         : 0,
                 ],
@@ -104,7 +104,7 @@ class DashboardController extends Controller
                 'cached_at' => now()->toIso8601String(),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Stats Error: ' . $e->getMessage(), [
+            \Log::error('Dashboard Stats Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -152,7 +152,7 @@ class DashboardController extends Controller
                 'data' => $chartData,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard User Growth Error: ' . $e->getMessage());
+            \Log::error('Dashboard User Growth Error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -176,9 +176,9 @@ class DashboardController extends Controller
                     try {
                         $roleName = $user->role ? $user->role->displayName() : 'Unknown';
                     } catch (\Throwable $e) {
-                        \Log::warning('Invalid role for user ' . $user->id);
+                        \Log::warning('Invalid role for user '.$user->id);
                     }
-                    
+
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
@@ -194,7 +194,7 @@ class DashboardController extends Controller
                 'data' => $users,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Recent Users Error: ' . $e->getMessage(), [
+            \Log::error('Dashboard Recent Users Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -223,16 +223,16 @@ class DashboardController extends Controller
                             $roleName = UserRole::from($invitation->role)->displayName();
                         }
                     } catch (\Throwable $e) {
-                        \Log::warning('Invalid role in invitation ' . $invitation->id);
+                        \Log::warning('Invalid role in invitation '.$invitation->id);
                     }
-                    
+
                     return [
                         'id' => $invitation->id,
                         'email' => $invitation->email,
                         'role' => $roleName,
                         'invited_by' => $invitation->invitedBy->name ?? 'System',
-                        'status' => $invitation->used 
-                            ? 'Used' 
+                        'status' => $invitation->used
+                            ? 'Used'
                             : ($invitation->isValid() ? 'Pending' : 'Expired'),
                         'expires_at' => $invitation->expires_at->diffForHumans(),
                         'created_at' => $invitation->created_at->diffForHumans(),
@@ -244,7 +244,7 @@ class DashboardController extends Controller
                 'data' => $invitations,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Recent Invitations Error: ' . $e->getMessage(), [
+            \Log::error('Dashboard Recent Invitations Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -262,9 +262,9 @@ class DashboardController extends Controller
     public function getRecentBackups(): JsonResponse
     {
         try {
-            $backupPath = storage_path('app' . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . 'database');
-            
-            if (!\File::exists($backupPath)) {
+            $backupPath = storage_path('app'.DIRECTORY_SEPARATOR.'backups'.DIRECTORY_SEPARATOR.'database');
+
+            if (! \File::exists($backupPath)) {
                 return response()->json([
                     'success' => true,
                     'data' => [],
@@ -299,7 +299,7 @@ class DashboardController extends Controller
                 'data' => $backups,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Recent Backups Error: ' . $e->getMessage(), [
+            \Log::error('Dashboard Recent Backups Error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -316,12 +316,12 @@ class DashboardController extends Controller
     private function formatBytes(int $bytes, int $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, $precision) . ' ' . $units[$i];
+
+        return round($bytes, $precision).' '.$units[$i];
     }
 
     /**
@@ -392,7 +392,7 @@ class DashboardController extends Controller
             foreach ($items as $it) {
                 $acc = (string) $it->inventory_accountable;
                 $ts = optional($it->updated_at)->getTimestamp() ?? 0;
-                if (!isset($latestByAccountable[$acc]) || ($latestByAccountable[$acc]['timestamp'] ?? 0) < $ts) {
+                if (! isset($latestByAccountable[$acc]) || ($latestByAccountable[$acc]['timestamp'] ?? 0) < $ts) {
                     $eventType = ($it->updated_at && $it->created_at && $it->updated_at->eq($it->created_at)) ? 'created' : 'updated';
                     $latestByAccountable[$acc] = [
                         'accountable' => $acc,
@@ -425,7 +425,7 @@ class DashboardController extends Controller
             foreach ($deletedEvents as $ev) {
                 try {
                     $ts = Carbon::parse($ev['timestamp']);
-                    if (!$latestDeletionTs || $ts->gt($latestDeletionTs)) {
+                    if (! $latestDeletionTs || $ts->gt($latestDeletionTs)) {
                         $latestDeletionTs = $ts;
                     }
                 } catch (\Throwable $e) {
@@ -457,7 +457,8 @@ class DashboardController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Inventories Activity Error: ' . $e->getMessage());
+            \Log::error('Dashboard Inventories Activity Error: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch inventories activity',

@@ -16,12 +16,12 @@ class EnsureUserIsSystemAdmin
     public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
-        
+
         // Check if user exists and is System Admin
-        if (!$user || !$user->isSystemAdmin()) {
+        if (! $user || ! $user->isSystemAdmin()) {
             abort(403, 'Access denied. Only System Administrators can access this resource.');
         }
-        
+
         return $next($request);
     }
 }

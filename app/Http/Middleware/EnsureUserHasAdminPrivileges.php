@@ -16,12 +16,12 @@ class EnsureUserHasAdminPrivileges
     public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
-        
+
         // Check if user exists and has admin privileges (System Admin or Admin)
-        if (!$user || !$user->hasAdminPrivileges()) {
+        if (! $user || ! $user->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to access this resource.');
         }
-        
+
         return $next($request);
     }
 }

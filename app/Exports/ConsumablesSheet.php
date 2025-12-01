@@ -5,11 +5,11 @@ namespace App\Exports;
 use App\Models\Consumable;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class ConsumablesSheet implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
+class ConsumablesSheet implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle
 {
     public function collection(): Collection
     {
@@ -33,4 +33,3 @@ class ConsumablesSheet implements FromCollection, WithHeadings, WithTitle, Shoul
         return 'Consumables';
     }
 }
-

@@ -4,15 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Exports\InventoriesExport;
 use App\Models\Inventory;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 
 class InventoryController extends Controller
 {
@@ -35,7 +35,7 @@ class InventoryController extends Controller
         $perPage = (int) $request->get('perPage', 10);
         $page = (int) $request->get('page', 1);
         $allowed = [10, 25, 50, 100];
-        if (!in_array($perPage, $allowed, true)) {
+        if (! in_array($perPage, $allowed, true)) {
             $perPage = 10;
         }
 
@@ -69,7 +69,9 @@ class InventoryController extends Controller
 
         $groups = [];
         foreach ($pageAccountables as $acc) {
-            if ($acc === '') { continue; }
+            if ($acc === '') {
+                continue;
+            }
 
             $itemsQ = Inventory::query()->where('inventory_accountable', $acc);
             if ($search !== '') {
@@ -121,6 +123,7 @@ class InventoryController extends Controller
         }
 
         $items = $query->orderBy('inventory_name')->get();
+
         return response()->json(['success' => true, 'data' => $items]);
     }
 
@@ -226,6 +229,7 @@ class InventoryController extends Controller
         }
 
         $inventory->delete();
+
         return response()->json(['success' => true]);
     }
 
@@ -253,6 +257,7 @@ class InventoryController extends Controller
         } catch (\Throwable $e) {
             // swallow cache errors
         }
+
         return response()->json(['success' => true]);
     }
 
@@ -262,6 +267,7 @@ class InventoryController extends Controller
         $year = now()->format('Y');
         $createdAt = now()->format('Y-m-d_His');
         $fileName = "IT INVENTORIES_{$year}_{$createdAt}.xlsx";
+
         return Excel::download(new InventoriesExport($accountable), $fileName);
     }
 
@@ -282,7 +288,7 @@ class InventoryController extends Controller
 
         if ($mode === 'single') {
             $acc = $request->get('accountable');
-            if (!$acc) {
+            if (! $acc) {
                 return response()->json(['success' => false, 'errors' => ['accountable is required for single sheet import']], 422);
             }
 
@@ -292,7 +298,9 @@ class InventoryController extends Controller
                 $spec = $row[1] ?? null;
                 $brand = $row[2] ?? null;
                 $status = $row[3] ?? 'active';
-                if (!$name) { continue; }
+                if (! $name) {
+                    continue;
+                }
                 Inventory::create([
                     'inventory_accountable' => (string) $acc,
                     'inventory_name' => (string) $name,
@@ -314,13 +322,17 @@ class InventoryController extends Controller
 
             foreach ($arr as $index => $rows) {
                 $acc = $sheetNames[$index] ?? null;
-                if (!$acc) { continue; }
+                if (! $acc) {
+                    continue;
+                }
                 foreach (array_slice($rows, 1) as $row) {
                     $name = $row[0] ?? null;
                     $spec = $row[1] ?? null;
                     $brand = $row[2] ?? null;
                     $status = $row[3] ?? 'active';
-                    if (!$name) { continue; }
+                    if (! $name) {
+                        continue;
+                    }
                     Inventory::create([
                         'inventory_accountable' => (string) $acc,
                         'inventory_name' => (string) $name,
@@ -344,6 +356,7 @@ class InventoryController extends Controller
         ]);
         $ts = now()->format('Ymd_His');
         $safeAcc = preg_replace('/[^A-Za-z0-9_\-]/', '_', $accountable);
+
         return $pdf->download("it-inventories_{$safeAcc}_{$ts}.pdf");
     }
 
@@ -355,6 +368,7 @@ class InventoryController extends Controller
             'groups' => $groups,
         ]);
         $ts = now()->format('Ymd_His');
+
         return $pdf->download("it-inventories_all_{$ts}.pdf");
     }
 }

@@ -27,4 +27,3 @@ class ConsumableUsageResource extends JsonResource
         ];
     }
 }
-

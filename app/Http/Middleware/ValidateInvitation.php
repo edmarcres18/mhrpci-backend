@@ -18,14 +18,14 @@ class ValidateInvitation
     {
         $token = $request->query('token') ?? $request->input('token');
 
-        if (!$token) {
+        if (! $token) {
             return redirect()->route('login')
                 ->withErrors(['error' => 'Valid invitation token is required to register.']);
         }
 
         $invitation = Invitation::where('token', $token)->first();
 
-        if (!$invitation || !$invitation->isValid()) {
+        if (! $invitation || ! $invitation->isValid()) {
             return redirect()->route('login')
                 ->withErrors(['error' => 'Invalid or expired invitation link.']);
         }
