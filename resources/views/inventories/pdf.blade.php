@@ -26,9 +26,10 @@
             border: 1px solid #D1D5DB;
         }
         tbody tr:nth-child(even) { background: #F9FAFB; }
-        .col-name { width: 28%; }
-        .col-spec { width: 38%; }
-        .col-brand { width: 22%; }
+        .col-code { width: 20%; }
+        .col-name { width: 25%; }
+        .col-spec { width: 30%; }
+        .col-brand { width: 13%; }
         .col-status { width: 12%; }
         .status { font-weight: 600; color: #1F2937; }
         .footer { position: fixed; bottom: 10px; left: 0; right: 0; text-align: right; font-size: 11px; color: #6B7280; }
@@ -49,6 +50,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th class="col-code">Item Code</th>
                         <th class="col-name">Name</th>
                         <th class="col-spec">Specification</th>
                         <th class="col-brand">Brand</th>
@@ -58,6 +60,7 @@
                 <tbody>
                     @foreach($items as $item)
                         <tr>
+                            <td class="col-code">{{ $item->item_code }}</td>
                             <td class="col-name">{{ $item->inventory_name }}</td>
                             <td class="col-spec">{{ $item->inventory_specification }}</td>
                             <td class="col-brand">{{ $item->inventory_brand }}</td>
@@ -83,6 +86,7 @@
         <table>
             <thead>
                 <tr>
+                    <th class="col-code">Item Code</th>
                     <th class="col-name">Name</th>
                     <th class="col-spec">Specification</th>
                     <th class="col-brand">Brand</th>
@@ -92,6 +96,7 @@
             <tbody>
                 @foreach($items as $item)
                     <tr>
+                        <td class="col-code">{{ $item->item_code }}</td>
                         <td class="col-name">{{ $item->inventory_name }}</td>
                         <td class="col-spec">{{ $item->inventory_specification }}</td>
                         <td class="col-brand">{{ $item->inventory_brand }}</td>

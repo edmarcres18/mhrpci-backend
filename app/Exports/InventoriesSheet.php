@@ -29,12 +29,12 @@ class InventoriesSheet implements FromCollection, ShouldAutoSize, WithEvents, Wi
     {
         return Inventory::query()
             ->where('inventory_accountable', $this->accountable)
-            ->get(['inventory_name', 'inventory_specification', 'inventory_brand', 'inventory_status']);
+            ->get(['item_code', 'inventory_name', 'inventory_specification', 'inventory_brand', 'inventory_status']);
     }
 
     public function headings(): array
     {
-        return ['Name', 'Specification', 'Brand', 'Status'];
+        return ['Item Code', 'Name', 'Specification', 'Brand', 'Status'];
     }
 
     public function title(): string
@@ -61,7 +61,7 @@ class InventoriesSheet implements FromCollection, ShouldAutoSize, WithEvents, Wi
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->getStyle('A1:D1')->applyFromArray([
+                $sheet->getStyle('A1:E1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'color' => ['argb' => 'FF111827'],
@@ -84,11 +84,11 @@ class InventoriesSheet implements FromCollection, ShouldAutoSize, WithEvents, Wi
                 ]);
 
                 $sheet->freezePane('A2');
-                $sheet->setAutoFilter('A1:D1');
+                $sheet->setAutoFilter('A1:E1');
 
                 $highestRow = $sheet->getHighestRow();
                 if ($highestRow >= 2) {
-                    $sheet->getStyle("A2:D{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A2:E{$highestRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -101,15 +101,15 @@ class InventoriesSheet implements FromCollection, ShouldAutoSize, WithEvents, Wi
                         ],
                     ]);
 
-                    $sheet->getStyle("A2:D{$highestRow}")->getAlignment()->setWrapText(true);
+                    $sheet->getStyle("A2:E{$highestRow}")->getAlignment()->setWrapText(true);
 
                     for ($row = 2; $row <= $highestRow; $row++) {
                         if ($row % 2 === 0) {
-                            $sheet->getStyle("A{$row}:D{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF9FAFB');
+                            $sheet->getStyle("A{$row}:E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF9FAFB');
                         }
                     }
 
-                    $sheet->getStyle("A1:D{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A1:E{$highestRow}")->applyFromArray([
                         'borders' => [
                             'outline' => [
                                 'borderStyle' => Border::BORDER_MEDIUM,

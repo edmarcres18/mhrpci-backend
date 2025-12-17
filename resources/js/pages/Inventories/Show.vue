@@ -15,6 +15,7 @@ type ToastType = 'success' | 'error';
 
 interface InventoryItem {
   id: number;
+  item_code?: string; // Add item_code here
   inventory_accountable: string;
   inventory_name: string;
   inventory_specification?: string;
@@ -267,6 +268,7 @@ const filteredItems = computed(() => items.value);
               <thead>
                 <tr class="border-b bg-muted/50">
                   <th class="p-2 text-left">Name</th>
+                  <th class="p-2 text-left">Code</th>
                   <th class="p-2 text-left hidden md:table-cell">Specification</th>
                   <th class="p-2 text-left hidden md:table-cell">Brand</th>
                   <th class="p-2 text-left">Status</th>
@@ -276,6 +278,7 @@ const filteredItems = computed(() => items.value);
               <tbody>
                 <tr v-for="item in filteredItems" :key="item.id" class="border-b hover:bg-muted/30">
                   <td class="p-2"><Input v-model="item.inventory_name" @change="updateItem(item)" /></td>
+                  <td class="p-2"><Input :model-value="item.item_code" readonly /></td>
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_specification" @change="updateItem(item)" /></td>
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_brand" @change="updateItem(item)" /></td>
                   <td class="p-2"><Input v-model="item.inventory_status" @change="updateItem(item)" /></td>
@@ -292,6 +295,10 @@ const filteredItems = computed(() => items.value);
                 <div class="space-y-2">
                   <Label>Name</Label>
                   <Input v-model="item.inventory_name" @change="updateItem(item)" />
+                </div>
+                <div class="space-y-2">
+                  <Label>Code</Label>
+                  <Input :model-value="item.item_code" readonly />
                 </div>
                 <div class="space-y-2">
                   <Label>Specification</Label>
