@@ -261,7 +261,7 @@ async function deleteAccountable(accountable: string) {
         </CardContent>
       </Card>
 
-      
+
 
       <Card>
         <CardHeader>
