@@ -5,14 +5,16 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens; // Add HasApiTokens for Sanctum
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasApiTokens; // Add HasApiTokens
 
     /**
      * The attributes that are mass assignable.
@@ -91,5 +93,13 @@ class User extends Authenticatable
     public function hasAdminPrivileges(): bool
     {
         return $this->isSystemAdmin() || $this->isAdmin();
+    }
+
+    /**
+     * Get the biometrics for the user.
+     */
+    public function biometrics(): HasMany
+    {
+        return $this->hasMany(UserBiometric::class);
     }
 }

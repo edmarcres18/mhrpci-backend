@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\InventoriesExport;
+use App\Enums\InventoryLocation;
 use App\Models\Inventory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -137,6 +138,7 @@ class InventoryController extends Controller
             'inventory_specification' => ['nullable', 'string', 'max:255'],
             'inventory_brand' => ['nullable', 'string', 'max:255'],
             'inventory_status' => ['required', 'string', 'max:50'],
+            'location' => ['required', 'string', 'max:100', 'in:' . implode(',', InventoryLocation::values())],
         ]);
 
         if ($validator->fails()) {
@@ -159,6 +161,7 @@ class InventoryController extends Controller
             'items.*.inventory_specification' => ['nullable', 'string', 'max:255'],
             'items.*.inventory_brand' => ['nullable', 'string', 'max:255'],
             'items.*.inventory_status' => ['required', 'string', 'max:50'],
+            'items.*.location' => ['required', 'string', 'max:100', 'in:' . implode(',', InventoryLocation::values())],
         ]);
 
         if ($validator->fails()) {
@@ -175,6 +178,7 @@ class InventoryController extends Controller
                 'inventory_specification' => $row['inventory_specification'] ?? null,
                 'inventory_brand' => $row['inventory_brand'] ?? null,
                 'inventory_status' => $row['inventory_status'],
+                'location' => $row['location'],
             ]);
         }
 
@@ -191,6 +195,7 @@ class InventoryController extends Controller
             'inventory_specification' => ['nullable', 'string', 'max:255'],
             'inventory_brand' => ['nullable', 'string', 'max:255'],
             'inventory_status' => ['required', 'string', 'max:50'],
+            'location' => ['required', 'string', 'max:100', 'in:' . implode(',', InventoryLocation::values())],
         ]);
 
         if ($validator->fails()) {
@@ -200,6 +205,11 @@ class InventoryController extends Controller
         $inventory->update($validator->validated());
 
         return response()->json(['success' => true, 'data' => $inventory]);
+    }
+
+    public function locations(): JsonResponse
+    {
+        return response()->json(['success' => true, 'data' => InventoryLocation::values()]);
     }
 
     public function destroy(Inventory $inventory): JsonResponse
@@ -370,5 +380,33 @@ class InventoryController extends Controller
         $ts = now()->format('Ymd_His');
 
         return $pdf->download("it-inventories_all_{$ts}.pdf");
+    }
+
+    /**
+     * Fetch a single inventory item by its ID.
+     */
+    public function show(Inventory $inventory): JsonResponse
+    {
+        return response()->json(['success' => true, 'data' => $inventory]);
+    }
+
+    /**
+     * Fetch all inventory items.
+     */
+    public function getAllInventories(): JsonResponse
+    {
+        $items = Inventory::all();
+
+        return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    /**
+     * Get the total count of inventory items.
+     */
+    public function getTotalInventoriesCount(): JsonResponse
+    {
+        $count = Inventory::count();
+
+        return response()->json(['success' => true, 'data' => ['total' => $count]]);
     }
 }

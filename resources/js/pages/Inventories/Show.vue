@@ -21,6 +21,7 @@ interface InventoryItem {
   inventory_specification?: string;
   inventory_brand?: string;
   inventory_status: string;
+  location?: string;
 }
 
 const props = defineProps<{ accountable: string }>();
@@ -34,6 +35,7 @@ const breadcrumbs = [
 const items = ref<InventoryItem[]>([]);
 const search = ref('');
 const statusFilter = ref('');
+const locations = ref<string[]>(['Warehouse', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', 'Virtual Room']);
 
 const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
   show: false,
@@ -48,6 +50,17 @@ function showToast(type: ToastType, message: string) {
   window.setTimeout(() => (toast.show = false), 3500);
 }
 
+async function fetchLocations() {
+  try {
+    const res = await axios.get('/api/v1/inventories/locations');
+    if (res.data?.success && Array.isArray(res.data.data)) {
+      locations.value = res.data.data as string[];
+    }
+  } catch (e) {
+    // keep defaults
+  }
+}
+
 async function fetchItems() {
   const res = await axios.get(`/api/inventories/by-accountable/${encodeURIComponent(props.accountable)}`, {
     params: { search: search.value || undefined, status: statusFilter.value || undefined },
@@ -57,11 +70,15 @@ async function fetchItems() {
       ...it,
       inventory_specification: it.inventory_specification ?? '',
       inventory_brand: it.inventory_brand ?? '',
+      location: it.location ?? locations.value[0] ?? 'Warehouse',
     }));
   }
 }
 
-onMounted(fetchItems);
+onMounted(async () => {
+  await fetchLocations();
+  await fetchItems();
+});
 
 async function updateItem(item: InventoryItem) {
   try {
@@ -69,6 +86,7 @@ async function updateItem(item: InventoryItem) {
       ...item,
       inventory_specification: item.inventory_specification || null,
       inventory_brand: item.inventory_brand || null,
+      location: item.location || locations.value[0] || 'Warehouse',
     };
     const res = await axios.put(`/api/inventories/${item.id}`, payload);
     if (res.data?.success) showToast('success', 'Item updated');
@@ -88,11 +106,11 @@ async function deleteItem(item: InventoryItem) {
   }
 }
 
-const newItems = ref<Pick<InventoryItem, 'inventory_name' | 'inventory_specification' | 'inventory_brand' | 'inventory_status'>[]>([
-  { inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active' },
+const newItems = ref<Pick<InventoryItem, 'inventory_name' | 'inventory_specification' | 'inventory_brand' | 'inventory_status' | 'location'>[]>([
+  { inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active', location: locations.value[0] },
 ]);
 function addRow() {
-  newItems.value.push({ inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active' });
+  newItems.value.push({ inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active', location: locations.value[0] });
 }
 
 function removeRow(index: number) {
@@ -107,13 +125,14 @@ async function saveBatch() {
       inventory_specification: i.inventory_specification || null,
       inventory_brand: i.inventory_brand || null,
       inventory_status: i.inventory_status || 'active',
+      location: i.location || locations.value[0] || 'Warehouse',
     })),
   };
   try {
     const res = await axios.post('/api/inventories/batch', payload);
     if (res.data?.success) {
       showToast('success', 'Items added');
-      newItems.value = [{ inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active' }];
+      newItems.value = [{ inventory_name: '', inventory_specification: '', inventory_brand: '', inventory_status: 'active', location: locations.value[0] }];
       await fetchItems();
     }
   } catch (e: any) {
@@ -215,6 +234,15 @@ const filteredItems = computed(() => items.value);
                   <Label>Status</Label>
                   <Input v-model="row.inventory_status" placeholder="Status" />
                 </div>
+                <div class="space-y-2">
+                  <Label>Location</Label>
+                  <select
+                    v-model="row.location"
+                    class="w-full rounded-md border border-input bg-background text-foreground shadow-sm px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                  </select>
+                </div>
                 <div class="flex">
                   <Button class="w-full" variant="secondary" size="sm" @click="removeRow(idx)">Remove</Button>
                 </div>
@@ -239,6 +267,14 @@ const filteredItems = computed(() => items.value);
                   <td class="p-2"><Input v-model="row.inventory_specification" placeholder="Specification" /></td>
                   <td class="p-2"><Input v-model="row.inventory_brand" placeholder="Brand" /></td>
                   <td class="p-2"><Input v-model="row.inventory_status" placeholder="Status" /></td>
+                  <td class="p-2">
+                    <select
+                      v-model="row.location"
+                      class="w-full rounded-md border border-input bg-background text-foreground shadow-sm px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                    </select>
+                  </td>
                   <td class="p-2 text-right">
                     <Button variant="secondary" size="sm" @click="removeRow(idx)">Remove</Button>
                   </td>
@@ -272,6 +308,7 @@ const filteredItems = computed(() => items.value);
                   <th class="p-2 text-left hidden md:table-cell">Specification</th>
                   <th class="p-2 text-left hidden md:table-cell">Brand</th>
                   <th class="p-2 text-left">Status</th>
+                  <th class="p-2 text-left">Location</th>
                   <th class="p-2"></th>
                 </tr>
               </thead>
@@ -282,6 +319,15 @@ const filteredItems = computed(() => items.value);
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_specification" @change="updateItem(item)" /></td>
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_brand" @change="updateItem(item)" /></td>
                   <td class="p-2"><Input v-model="item.inventory_status" @change="updateItem(item)" /></td>
+                  <td class="p-2">
+                    <select
+                      v-model="item.location"
+                      class="w-full rounded-md border border-input bg-background text-foreground shadow-sm px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      @change="updateItem(item)"
+                    >
+                      <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                    </select>
+                  </td>
                   <td class="p-2 text-right">
                     <Button variant="secondary" size="sm" @click="deleteItem(item)">Delete</Button>
                   </td>
@@ -311,6 +357,16 @@ const filteredItems = computed(() => items.value);
                 <div class="space-y-2">
                   <Label>Status</Label>
                   <Input v-model="item.inventory_status" @change="updateItem(item)" />
+                </div>
+                <div class="space-y-2">
+                  <Label>Location</Label>
+                  <select
+                    v-model="item.location"
+                    class="w-full rounded-md border border-input bg-background text-foreground shadow-sm px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    @change="updateItem(item)"
+                  >
+                    <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                  </select>
                 </div>
                 <div class="flex">
                   <Button class="w-full" variant="secondary" size="sm" @click="deleteItem(item)">Delete</Button>

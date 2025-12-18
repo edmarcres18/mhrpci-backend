@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InventoryLocation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,12 @@ class Inventory extends Model
         'inventory_specification',
         'inventory_brand',
         'inventory_status',
+        'location',
         'item_code',
+    ];
+
+    protected $casts = [
+        'location' => InventoryLocation::class,
     ];
 
     /**
