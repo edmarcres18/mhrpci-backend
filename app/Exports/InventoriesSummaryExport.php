@@ -57,7 +57,7 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
 
     public function headings(): array
     {
-        return ['NO.', 'END USER', 'LOCATION', 'ITEM CODE', 'ITEM', 'SPECIFICATION', 'BRAND', 'STATUS'];
+        return ['NO.', 'END USER', 'LOCATION', 'ITEM CODE', 'ITEM NAME', 'ITEM SPECIFICATION', 'ITEM BRAND', 'STATUS'];
     }
 
     public function styles(Worksheet $sheet)
