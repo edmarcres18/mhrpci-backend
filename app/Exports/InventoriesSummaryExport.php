@@ -154,7 +154,6 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                 $protection->setSort(true);
                 $protection->setAutoFilter(true);
 
-                // Protect workbook structure (renaming/moving sheets requires password)
                 $workbookSecurity = $sheet->getParent()->getSecurity();
                 $workbookSecurity->setLockStructure(true);
                 $workbookSecurity->setWorkbookPassword('mhrpci-admin@2025');
