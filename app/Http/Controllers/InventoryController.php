@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\InventoriesExport;
+use App\Exports\InventoriesSummaryExport;
 use App\Enums\InventoryLocation;
 use App\Models\Inventory;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -279,6 +280,15 @@ class InventoryController extends Controller
         $fileName = "IT INVENTORIES_{$year}_{$createdAt}.xlsx";
 
         return Excel::download(new InventoriesExport($accountable), $fileName);
+    }
+
+    public function exportSummaryExcel()
+    {
+        $year = now()->format('Y');
+        $createdAt = now()->format('Y-m-d_His');
+        $fileName = "IT INVENTORIES SUMMARY_{$year}_{$createdAt}.xlsx";
+
+        return Excel::download(new InventoriesSummaryExport(), $fileName);
     }
 
     public function importExcel(Request $request): JsonResponse

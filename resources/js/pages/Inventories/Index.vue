@@ -163,6 +163,10 @@ function exportExcel(accountable?: string) {
   window.location.href = url;
 }
 
+function exportSummaryExcel() {
+  window.location.href = '/api/inventories/export-summary-excel';
+}
+
 function exportPdf(accountable?: string) {
   const url = accountable ? `/api/inventories/export-pdf/${encodeURIComponent(accountable)}` : '/api/inventories/export-pdf';
   window.location.href = url;
@@ -214,6 +218,7 @@ async function deleteAccountable(accountable: string) {
           <Badge variant="outline">Items: {{ totalItems }}</Badge>
         </div>
         <div class="flex items-center gap-2">
+          <Button class="w-full sm:w-auto" @click="exportSummaryExcel"><FileSpreadsheet class="size-4" /> Export Summary Excel</Button>
           <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel()"><FileSpreadsheet class="size-4" /> Export All Excel</Button>
           <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf()"><FileText class="size-4" /> Export All PDF</Button>
         </div>
