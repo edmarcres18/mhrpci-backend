@@ -10,13 +10,14 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEvents, WithHeadings, WithMapping, WithStyles
+class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEvents, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected int $rowNumber = 0;
 
@@ -60,6 +61,11 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
         return ['NO.', 'END USER', 'LOCATION', 'ITEM CODE', 'ITEM NAME', 'ITEM SPECIFICATION', 'ITEM BRAND', 'STATUS'];
     }
 
+    public function title(): string
+    {
+        return 'IT INVENTORIES';
+    }
+
     public function styles(Worksheet $sheet)
     {
         $sheet->getParent()->getDefaultStyle()->getFont()
@@ -80,11 +86,11 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                 $sheet->getStyle('A1:H1')->applyFromArray([
                     'font' => [
                         'bold' => true,
-                        'color' => ['argb' => 'FF111827'],
+                        'color' => ['argb' => 'FFFFFFFF'],
                     ],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FFF3F4F6'],
+                        'startColor' => ['argb' => 'FF0F4C81'],
                     ],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_LEFT,
@@ -141,6 +147,17 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                         ],
                     ]);
                 }
+
+                $protection = $sheet->getProtection();
+                $protection->setPassword('mhrpci-admin@2025');
+                $protection->setSheet(true);
+                $protection->setSort(true);
+                $protection->setAutoFilter(true);
+
+                // Protect workbook structure (renaming/moving sheets requires password)
+                $workbookSecurity = $sheet->getParent()->getSecurity();
+                $workbookSecurity->setLockStructure(true);
+                $workbookSecurity->setWorkbookPassword('mhrpci-admin@2025');
             },
         ];
     }
