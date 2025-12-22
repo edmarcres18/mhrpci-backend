@@ -357,24 +357,29 @@ class UserController extends Controller
             return back()->withErrors(['role' => 'You do not have permission to invite System Admin users.']);
         }
 
-        // Check if there's already a pending invitation for this email
-        $existingInvitation = Invitation::where('email', $validated['email'])
-            ->where('used', false)
-            ->where('expires_at', '>', Carbon::now())
-            ->first();
+        // Check if there's any invitation (active, expired, or used) for this email
+        $existingInvitation = Invitation::where('email', $validated['email'])->first();
 
         if ($existingInvitation) {
-            return back()->withErrors(['email' => 'An invitation has already been sent to this email address.']);
+            // Update the existing invitation (e.g., extend expiration, generate new token)
+            $invitation = $existingInvitation;
+            $invitation->update([
+                'token' => Invitation::generateToken(),
+                'expires_at' => Carbon::now()->addDays(7),
+                'used' => false, // Ensure it's marked as unused if re-sending
+                'invited_by' => $currentUser->id,
+                'role' => $validated['role'], // Update role if it changed
+            ]);
+        } else {
+            // Create a new invitation
+            $invitation = Invitation::create([
+                'email' => $validated['email'],
+                'token' => Invitation::generateToken(),
+                'role' => $validated['role'],
+                'invited_by' => $currentUser->id,
+                'expires_at' => Carbon::now()->addDays(7),
+            ]);
         }
-
-        // Create the invitation
-        $invitation = Invitation::create([
-            'email' => $validated['email'],
-            'token' => Invitation::generateToken(),
-            'role' => $validated['role'],
-            'invited_by' => $currentUser->id,
-            'expires_at' => Carbon::now()->addDays(7),
-        ]);
 
         // Send the invitation email
         Notification::route('mail', $validated['email'])
