@@ -12,6 +12,9 @@ enum InventoryLocation: string
     case VIRTUAL_ROOM = 'Virtual Room';
     case MAKATI = 'Makati';
     case CDO = 'CDO';
+    case BGPDI = 'BGPDI';
+    case VHI = 'VHI';
+    case GORORDO = 'GORORDO';
 
     /**
      * @return array<InventoryLocation>
@@ -27,6 +30,9 @@ enum InventoryLocation: string
             self::VIRTUAL_ROOM,
             self::MAKATI,
             self::CDO,
+            self::BGPDI,
+            self::VHI,
+            self::GORORDO,
         ];
     }
 

@@ -35,7 +35,19 @@ const breadcrumbs = [
 const items = ref<InventoryItem[]>([]);
 const search = ref('');
 const statusFilter = ref('');
-const locations = ref<string[]>(['Warehouse', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', 'Virtual Room', 'Makati', 'CDO']);
+const locations = ref<string[]>([
+  'Warehouse',
+  '1st Floor',
+  '2nd Floor',
+  '3rd Floor',
+  '4th Floor',
+  'Virtual Room',
+  'Makati',
+  'CDO',
+  'BGPDI',
+  'VHI',
+  'GORORDO',
+]);
 
 const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
   show: false,
