@@ -10,6 +10,8 @@ enum InventoryLocation: string
     case FOURTH_FLOOR = '4th Floor';
     case WAREHOUSE = 'Warehouse';
     case VIRTUAL_ROOM = 'Virtual Room';
+    case MAKATI = 'Makati';
+    case CDO = 'CDO';
 
     /**
      * @return array<InventoryLocation>
@@ -23,6 +25,8 @@ enum InventoryLocation: string
             self::FOURTH_FLOOR,
             self::WAREHOUSE,
             self::VIRTUAL_ROOM,
+            self::MAKATI,
+            self::CDO,
         ];
     }
 
