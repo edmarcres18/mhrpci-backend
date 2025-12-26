@@ -5,6 +5,7 @@ use App\Http\Controllers\ConsumableController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\EmailController;
+use App\Http\Controllers\InventoryCodeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
@@ -97,6 +98,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('api/inventories')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('api.inventories.index');
         Route::get('/by-accountable/{accountable}', [InventoryController::class, 'byAccountable'])->name('api.inventories.by-accountable');
+        Route::get('/codes', [InventoryCodeController::class, 'index'])->name('api.inventories.codes.index');
+        Route::post('/codes/generate', [InventoryCodeController::class, 'generateAll'])->name('api.inventories.codes.generate-all');
+        Route::get('/codes/{itemCode}/qr', [InventoryCodeController::class, 'downloadQr'])->name('api.inventories.codes.qr');
+        Route::get('/codes/{itemCode}/barcode', [InventoryCodeController::class, 'downloadBarcode'])->name('api.inventories.codes.barcode');
+        Route::get('/codes/print/all', [InventoryCodeController::class, 'printAll'])->name('api.inventories.codes.print-all');
 
         Route::middleware([EnsureUserHasAdminPrivileges::class])->group(function () {
             Route::post('/', [InventoryController::class, 'store'])->name('api.inventories.store');

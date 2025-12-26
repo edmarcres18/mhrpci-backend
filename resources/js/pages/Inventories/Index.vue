@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle, Printer } from 'lucide-vue-next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from '@inertiajs/vue3';
 
@@ -172,6 +172,11 @@ function exportPdf(accountable?: string) {
   window.location.href = url;
 }
 
+function printCodes(type: 'qr' | 'barcode', size: 'letter' | 'a4' = 'letter') {
+  const url = `/api/inventories/codes/print/all?type=${type}&size=${size}`;
+  window.open(url, '_blank');
+}
+
 function namesWithCount(group: InventoryGroup) {
   const names = group.items.map((i) => i.inventory_name).slice(0, 3);
   const remaining = Math.max(((group.total ?? group.items.length) - 3), 0);
@@ -208,34 +213,56 @@ async function deleteAccountable(accountable: string) {
     <div class="mx-auto w-full max-w-7xl p-4 space-y-6">
       <Toast v-model="toast.show" :type="toast.type" :message="toast.message" />
 
-      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div class="space-y-1">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="space-y-1 w-full">
           <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">IT Inventories</h1>
           <p class="text-sm text-muted-foreground">Browse accountables and export per group. Manage items in each accountable’s page.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <Badge variant="secondary">Groups: {{ pagination.total }}</Badge>
-          <Badge variant="outline">Items: {{ totalItems }}</Badge>
-        </div>
-        <div class="flex items-center gap-2">
-          <Button class="w-full sm:w-auto" @click="exportSummaryExcel"><FileSpreadsheet class="size-4" /> Export Summary Excel</Button>
-          <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel()"><FileSpreadsheet class="size-4" /> Export All Excel</Button>
-          <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf()"><FileText class="size-4" /> Export All PDF</Button>
+        <div class="flex flex-col gap-2 w-full sm:w-auto">
+          <div class="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">Groups: {{ pagination.total }}</Badge>
+            <Badge variant="outline">Items: {{ totalItems }}</Badge>
+          </div>
+          <div class="grid w-full gap-2 sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center lg:gap-2">
+            <Button class="w-full sm:w-auto" @click="exportSummaryExcel"><FileSpreadsheet class="size-4" /> Export Summary Excel</Button>
+            <Button class="w-full sm:w-auto" variant="secondary" @click="exportExcel()"><FileSpreadsheet class="size-4" /> Export All Excel</Button>
+            <Button class="w-full sm:w-auto" variant="secondary" @click="exportPdf()"><FileText class="size-4" /> Export All PDF</Button>
+            <TooltipProvider :delay-duration="0">
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button class="w-full sm:w-auto" variant="outline" @click="printCodes('qr')">
+                    <Printer class="size-4" /> Print All QR (PDF)
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Print all QR codes (Letter, PDF)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider :delay-duration="0">
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button class="w-full sm:w-auto" variant="outline" @click="printCodes('barcode')">
+                    <Printer class="size-4" /> Print All Barcodes (PDF)
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Print all barcodes (Letter, PDF)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 
       <Card>
-          <CardHeader>
-            <CardTitle>Quick Create Accountable</CardTitle>
-            <CardDescription>Enter a new accountable name to start managing its items.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <Input v-model="newAccountable" placeholder="e.g., IT Department" :aria-invalid="!newAccountable || !newAccountable.trim()" />
-              <Button class="w-full sm:w-auto" @click="goCreateAccountable" :disabled="!newAccountable || !newAccountable.trim()">Create</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <CardHeader>
+          <CardTitle>Quick Create Accountable</CardTitle>
+          <CardDescription>Enter a new accountable name to start managing its items.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <Input v-model="newAccountable" placeholder="e.g., IT Department" :aria-invalid="!newAccountable || !newAccountable.trim()" class="w-full" />
+            <Button class="w-full sm:w-auto" @click="goCreateAccountable" :disabled="!newAccountable || !newAccountable.trim()">Create</Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

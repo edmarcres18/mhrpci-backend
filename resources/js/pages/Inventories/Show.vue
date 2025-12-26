@@ -8,8 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, ArrowLeft, RefreshCw } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, ArrowLeft, RefreshCw, QrCode, Barcode } from 'lucide-vue-next';
 
 type ToastType = 'success' | 'error';
 
@@ -54,6 +62,17 @@ const toast = reactive<{ show: boolean; type: ToastType; message: string }>({
   type: 'success',
   message: '',
 });
+const previewOpen = ref(false);
+const previewSrc = ref('');
+const previewTitle = ref('');
+const previewMonthYear = computed(() => new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(new Date()));
+const downloadHref = ref('');
+const previewBase = ref('');
+const previewItemName = ref('');
+const previewItemCode = ref('');
+const previewAccountable = ref('');
+const previewType = ref<'QR' | 'Barcode'>('QR');
+const previewFormat = ref<'png' | 'jpg'>('png');
 
 function showToast(type: ToastType, message: string) {
   toast.show = true;
@@ -90,7 +109,60 @@ async function fetchItems() {
 onMounted(async () => {
   await fetchLocations();
   await fetchItems();
-});
+})
+
+async function generateCodes() {
+  try {
+    const res = await axios.post('/api/inventories/codes/generate');
+    if (res.data?.success) showToast('success', 'Codes refreshed for all items');
+  } catch (e: any) {
+    const msg = e?.response?.data?.errors?.[0] || 'Failed to generate codes';
+    showToast('error', msg);
+  }
+}
+
+function downloadQr(item: InventoryItem, format: 'png' | 'jpg' = 'png') {
+  if (!item.item_code) {
+    showToast('error', 'No item code to download');
+    return;
+  }
+  const base = `/api/inventories/codes/${encodeURIComponent(item.item_code)}/qr`;
+  previewBase.value = base;
+  previewSrc.value = `${base}?preview=1&format=${format}`;
+  downloadHref.value = `${base}?format=${format}`;
+  previewTitle.value = `QR Code Preview`;
+  previewItemName.value = item.inventory_name;
+  previewItemCode.value = item.item_code;
+  previewAccountable.value = item.inventory_accountable;
+  previewType.value = 'QR';
+  previewFormat.value = format;
+  previewOpen.value = true;
+}
+
+function downloadBarcode(item: InventoryItem, format: 'png' | 'jpg' = 'png') {
+  if (!item.item_code) {
+    showToast('error', 'No item code to download');
+    return;
+  }
+  const base = `/api/inventories/codes/${encodeURIComponent(item.item_code)}/barcode`;
+  previewBase.value = base;
+  previewSrc.value = `${base}?preview=1&format=${format}`;
+  downloadHref.value = `${base}?format=${format}`;
+  previewTitle.value = `Barcode Preview`;
+  previewItemName.value = item.inventory_name;
+  previewItemCode.value = item.item_code;
+  previewAccountable.value = item.inventory_accountable;
+  previewType.value = 'Barcode';
+  previewFormat.value = format;
+  previewOpen.value = true;
+}
+
+function downloadCurrent(format: 'png' | 'jpg') {
+  const base = previewBase.value || downloadHref.value.replace(/\?.*$/, '');
+  if (base) {
+    window.open(`${base}?format=${format}`, '_blank');
+  }
+}
 
 async function updateItem(item: InventoryItem) {
   try {
@@ -181,6 +253,7 @@ const filteredItems = computed(() => items.value);
           <Badge variant="secondary">Items: {{ items.length }}</Badge>
           <Button variant="secondary" @click="exportExcel"><FileSpreadsheet class="size-4" /> Excel</Button>
           <Button variant="secondary" @click="exportPdf"><FileText class="size-4" /> PDF</Button>
+          <Button variant="secondary" @click="generateCodes"><RefreshCw class="size-4" /> Generate Codes</Button>
           <Link href="/inventories"><Button variant="secondary"><ArrowLeft class="size-4" /> Back</Button></Link>
         </div>
       </div>
@@ -317,6 +390,7 @@ const filteredItems = computed(() => items.value);
                 <tr class="border-b bg-muted/50">
                   <th class="p-2 text-left">Name</th>
                   <th class="p-2 text-left">Code</th>
+                  <th class="p-2 text-left">Codes</th>
                   <th class="p-2 text-left hidden md:table-cell">Specification</th>
                   <th class="p-2 text-left hidden md:table-cell">Brand</th>
                   <th class="p-2 text-left">Status</th>
@@ -328,6 +402,16 @@ const filteredItems = computed(() => items.value);
                 <tr v-for="item in filteredItems" :key="item.id" class="border-b hover:bg-muted/30">
                   <td class="p-2"><Input v-model="item.inventory_name" @change="updateItem(item)" /></td>
                   <td class="p-2"><Input :model-value="item.item_code" readonly /></td>
+                  <td class="p-2">
+                    <div class="flex items-center gap-1">
+                      <Button variant="outline" size="icon" :disabled="!item.item_code" @click="downloadQr(item)">
+                        <QrCode class="size-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" :disabled="!item.item_code" @click="downloadBarcode(item)">
+                        <Barcode class="size-4" />
+                      </Button>
+                    </div>
+                  </td>
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_specification" @change="updateItem(item)" /></td>
                   <td class="p-2 hidden md:table-cell"><Input v-model="item.inventory_brand" @change="updateItem(item)" /></td>
                   <td class="p-2"><Input v-model="item.inventory_status" @change="updateItem(item)" /></td>
@@ -357,6 +441,17 @@ const filteredItems = computed(() => items.value);
                 <div class="space-y-2">
                   <Label>Code</Label>
                   <Input :model-value="item.item_code" readonly />
+                </div>
+                <div class="space-y-2">
+                  <Label>Codes</Label>
+                  <div class="flex items-center gap-2">
+                    <Button variant="outline" size="sm" class="flex-1" :disabled="!item.item_code" @click="downloadQr(item)">
+                      <QrCode class="size-4" /> QR
+                    </Button>
+                    <Button variant="outline" size="sm" class="flex-1" :disabled="!item.item_code" @click="downloadBarcode(item)">
+                      <Barcode class="size-4" /> Barcode
+                    </Button>
+                  </div>
                 </div>
                 <div class="space-y-2">
                   <Label>Specification</Label>
@@ -392,6 +487,42 @@ const filteredItems = computed(() => items.value);
           </div>
         </CardContent>
       </Card>
+
+      <!-- Preview modal -->
+      <Dialog v-model:open="previewOpen">
+        <DialogContent class="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle class="text-lg font-semibold">{{ previewTitle }}</DialogTitle>
+            <DialogDescription class="space-y-1">
+              <div class="text-foreground font-semibold">{{ previewAccountable }}</div>
+              <div class="text-foreground font-medium">{{ previewItemName }}</div>
+              <div class="text-muted-foreground text-sm">Code: {{ previewItemCode }}</div>
+              <div class="text-muted-foreground text-sm">{{ previewMonthYear }}</div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="flex justify-center">
+            <div class="rounded-lg border bg-white p-4 shadow-sm">
+              <img
+                v-if="previewSrc"
+                :src="previewSrc"
+                alt="Code preview"
+                class="max-h-96 object-contain"
+              />
+            </div>
+          </div>
+
+          <DialogFooter class="flex flex-col sm:flex-row gap-2 sm:justify-between">
+            <div class="flex flex-col sm:flex-row gap-2 w-full">
+              <Button variant="outline" class="w-full sm:w-auto" @click="downloadCurrent('png')">Download PNG</Button>
+              <Button variant="secondary" class="w-full sm:w-auto" @click="downloadCurrent('jpg')">Download JPG</Button>
+            </div>
+            <div class="text-xs text-muted-foreground sm:text-right w-full sm:w-auto">
+              {{ previewType }} • {{ previewFormat?.toUpperCase?.() || previewFormat }}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
- </template>
+</template>
