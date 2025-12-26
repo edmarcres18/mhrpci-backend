@@ -51,6 +51,7 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
             '3RD FLOOR',
             '4TH FLOOR',
             'WAREHOUSE',
+            'VIRTUAL ROOM',
             'GORORDO',
             'MAKATI',
             'CDO',
