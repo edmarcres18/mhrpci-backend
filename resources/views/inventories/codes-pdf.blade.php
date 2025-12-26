@@ -8,6 +8,7 @@
         body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
         h1 { font-size: 18px; margin: 0 0 6px; }
         .meta { font-size: 11px; margin-bottom: 10px; color: #333; }
+        .page { page-break-after: always; }
         .grid {
             display: flex;
             flex-wrap: wrap;
@@ -33,14 +34,19 @@
     </style>
 </head>
 <body>
-    <div class="grid">
-        @foreach($items as $item)
-            <div class="card">
-                @if($item['image'])
-                    <img src="{{ $item['image'] }}" alt="{{ $item['item_code'] }}" />
-                @endif
+    @php($chunks = collect($items)->chunk(28))
+    @foreach($chunks as $chunkIndex => $chunk)
+        <div class="page" @if($loop->last) style="page-break-after: auto;" @endif>
+            <div class="grid">
+                @foreach($chunk as $item)
+                    <div class="card">
+                        @if($item['image'])
+                            <img src="{{ $item['image'] }}" alt="{{ $item['item_code'] }}" />
+                        @endif
+                    </div>
+                @endforeach
             </div>
-        @endforeach
-    </div>
+        </div>
+    @endforeach
 </body>
 </html>
