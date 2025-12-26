@@ -44,21 +44,40 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
             $location = $location->value;
         }
 
+        $normalizedLocation = strtoupper(trim((string) $location));
+        $mhrpciLocations = [
+            '1ST FLOOR',
+            '2ND FLOOR',
+            '3RD FLOOR',
+            '4TH FLOOR',
+            'WAREHOUSE',
+            'GORORDO',
+            'MAKATI',
+            'CDO',
+        ];
+        $company = match ($normalizedLocation) {
+            'BGPDI' => 'BGPDI',
+            'VHI' => 'VHI',
+            default => in_array($normalizedLocation, $mhrpciLocations, true) ? 'MHRPCI' : '',
+        };
+
         return [
             ++$this->rowNumber,
+            $company,
             (string) $inventory->inventory_accountable,
-            (string) ($location ?? ''),
-            (string) $inventory->item_code,
             (string) $inventory->inventory_name,
             (string) ($inventory->inventory_specification ?? ''),
             (string) ($inventory->inventory_brand ?? ''),
+            (string) $inventory->item_code,
+            (string) ($location ?? ''),
             (string) $inventory->inventory_status,
+            1,
         ];
     }
 
     public function headings(): array
     {
-        return ['NO.', 'END USER', 'LOCATION', 'ITEM CODE', 'ITEM NAME', 'ITEM SPECIFICATION', 'ITEM BRAND', 'STATUS'];
+        return ['NO.', 'COMPANY', 'END USER', 'ITEM NAME', 'ITEM SPECIFICATION', 'ITEM BRAND', 'ITEM CODE', 'LOCATION', 'STATUS', 'QTY'];
     }
 
     public function title(): string
@@ -83,7 +102,7 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->getStyle('A1:H1')->applyFromArray([
+                $sheet->getStyle('A1:J1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'color' => ['argb' => 'FFFFFFFF'],
@@ -106,11 +125,11 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                 ]);
 
                 $sheet->freezePane('A2');
-                $sheet->setAutoFilter('A1:H1');
+                $sheet->setAutoFilter('A1:J1');
 
                 $highestRow = $sheet->getHighestRow();
                 if ($highestRow >= 2) {
-                    $sheet->getStyle("A2:H{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A2:J{$highestRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -126,7 +145,7 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
 
                     for ($row = 2; $row <= $highestRow; $row++) {
                         if ($row % 2 === 0) {
-                            $sheet->getStyle("A{$row}:H{$row}")
+                            $sheet->getStyle("A{$row}:J{$row}")
                                 ->getFill()
                                 ->setFillType(Fill::FILL_SOLID)
                                 ->getStartColor()
@@ -134,7 +153,7 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                         }
                     }
 
-                    $sheet->getStyle("A1:H{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A1:J{$highestRow}")->applyFromArray([
                         'borders' => [
                             'outline' => [
                                 'borderStyle' => Border::BORDER_MEDIUM,
