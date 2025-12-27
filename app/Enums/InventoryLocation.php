@@ -10,6 +10,7 @@ enum InventoryLocation: string
     case FOURTH_FLOOR = '4th Floor';
     case WAREHOUSE = 'Warehouse';
     case VIRTUAL_ROOM = 'Virtual Room';
+    case STORAGE_ROOM = 'Storage Room';
     case MAKATI = 'Makati';
     case CDO = 'CDO';
     case BGPDI = 'BGPDI';
@@ -27,6 +28,7 @@ enum InventoryLocation: string
             self::THIRD_FLOOR,
             self::FOURTH_FLOOR,
             self::WAREHOUSE,
+            self::STORAGE_ROOM,
             self::VIRTUAL_ROOM,
             self::MAKATI,
             self::CDO,

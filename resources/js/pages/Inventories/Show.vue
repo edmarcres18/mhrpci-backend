@@ -45,6 +45,7 @@ const search = ref('');
 const statusFilter = ref('');
 const locations = ref<string[]>([
   'Warehouse',
+  'Storage Room',
   '1st Floor',
   '2nd Floor',
   '3rd Floor',
