@@ -169,14 +169,12 @@ class InventoriesSummaryExport implements FromCollection, ShouldAutoSize, WithEv
                 }
 
                 $protection = $sheet->getProtection();
-                $protection->setPassword('mhrpci-admin@2025');
-                $protection->setSheet(true);
-                $protection->setSort(true);
-                $protection->setAutoFilter(true);
+                $protection->setSheet(false);
+                $protection->setSort(false);
+                $protection->setAutoFilter(false);
 
                 $workbookSecurity = $sheet->getParent()->getSecurity();
-                $workbookSecurity->setLockStructure(true);
-                $workbookSecurity->setWorkbookPassword('mhrpci-admin@2025');
+                $workbookSecurity->setLockStructure(false);
             },
         ];
     }
