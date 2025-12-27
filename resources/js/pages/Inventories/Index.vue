@@ -8,9 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import Toast from '@/pages/SiteSettings/Toast.vue';
-import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle, Printer } from 'lucide-vue-next';
+import { FileSpreadsheet, FileText, Search, RefreshCw, Eye, Trash2, CheckCircle, Printer, EllipsisVertical } from 'lucide-vue-next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link } from '@inertiajs/vue3';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type ToastType = 'success' | 'error';
 
@@ -172,6 +178,10 @@ function exportPdf(accountable?: string) {
   window.location.href = url;
 }
 
+function openAccountable(accountable: string) {
+  window.location.href = `/inventories/${encodeURIComponent(accountable)}`;
+}
+
 function printCodes(type: 'qr' | 'barcode', size: 'letter' | 'a4' = 'letter') {
   const url = `/api/inventories/codes/print/all?type=${type}&size=${size}`;
   window.open(url, '_blank');
@@ -308,80 +318,58 @@ async function deleteAccountable(accountable: string) {
             </div>
           </div>
 
-          <div v-if="filteredGroups.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card v-for="group in filteredGroups" :key="group.inventory_accountable" class="overflow-hidden">
-              <CardHeader class="border-b bg-muted/30">
-                <CardTitle class="text-base sm:text-lg text-start">{{ group.inventory_accountable }}</CardTitle>
-              </CardHeader>
-              <CardContent class="py-4">
-                <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-start">
-                  <span v-for="name in namesWithCount(group).names" :key="name" class="inline-flex items-center gap-1">
-                    <CheckCircle class="h-3.5 w-3.5 text-green-600" />
-                    <span class="truncate">{{ name }}</span>
-                  </span>
-                  <span v-if="namesWithCount(group).remaining > 0" class="text-xs text-muted-foreground">+{{ namesWithCount(group).remaining }} more</span>
-                </div>
-              </CardContent>
-              <CardFooter class="mt-auto p-4 flex flex-row flex-wrap items-center gap-2">
-                <TooltipProvider :delay-duration="0">
-                  <Tooltip>
-                    <TooltipTrigger as-child>
-                      <Link :href="`/inventories/${encodeURIComponent(group.inventory_accountable)}`">
-                        <Button variant="ghost" size="icon" class="h-9 w-9">
-                          <Eye class="size-4" />
-                          <span class="sr-only">View</span>
+          <div v-if="filteredGroups.length" class="overflow-x-auto rounded-lg border">
+            <table class="min-w-[720px] w-full text-sm">
+              <thead class="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th class="px-4 py-3 text-left font-semibold">Accountable</th>
+                  <th class="px-4 py-3 text-left font-semibold">Sample Items</th>
+                  <th class="px-4 py-3 text-left font-semibold">Total Items</th>
+                  <th class="px-4 py-3 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr v-for="group in filteredGroups" :key="group.inventory_accountable" class="hover:bg-muted/30">
+                  <td class="px-4 py-3 font-medium text-foreground align-top">{{ group.inventory_accountable }}</td>
+                  <td class="px-4 py-3 text-foreground align-top">
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="name in namesWithCount(group).names" :key="name" class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs text-green-700">
+                        <CheckCircle class="h-3.5 w-3.5 text-green-600" />
+                        <span class="truncate max-w-[180px]">{{ name }}</span>
+                      </span>
+                      <span v-if="namesWithCount(group).remaining > 0" class="text-xs text-muted-foreground">+{{ namesWithCount(group).remaining }} more</span>
+                      <span v-if="!namesWithCount(group).names.length" class="text-xs text-muted-foreground">No items yet</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-foreground align-top">
+                    <Badge variant="secondary">{{ group.total ?? group.items.length }} items</Badge>
+                  </td>
+                  <td class="px-4 py-3 align-top">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="outline" size="sm" class="h-9 w-full sm:w-auto justify-center" aria-label="Actions">
+                          <EllipsisVertical class="size-4" />
                         </Button>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>View</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider :delay-duration="0">
-                  <Tooltip>
-                    <TooltipTrigger as-child>
-                      <Button variant="ghost" size="icon" class="h-9 w-9" @click="exportExcel(group.inventory_accountable)">
-                        <FileSpreadsheet class="size-4" />
-                        <span class="sr-only">Export Excel</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Export Excel</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider :delay-duration="0">
-                  <Tooltip>
-                    <TooltipTrigger as-child>
-                      <Button variant="ghost" size="icon" class="h-9 w-9" @click="exportPdf(group.inventory_accountable)">
-                        <FileText class="size-4" />
-                        <span class="sr-only">Export PDF</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Export PDF</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider :delay-duration="0">
-                  <Tooltip>
-                    <TooltipTrigger as-child>
-                      <Button variant="destructive" size="icon" class="h-9 w-9" @click="deleteAccountable(group.inventory_accountable)">
-                        <Trash2 class="size-4" />
-                        <span class="sr-only">Delete</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Delete</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </CardFooter>
-            </Card>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" class="min-w-[180px]">
+                        <DropdownMenuItem @click="openAccountable(group.inventory_accountable)">
+                          <Eye class="mr-2 h-4 w-4" /> View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="exportExcel(group.inventory_accountable)">
+                          <FileSpreadsheet class="mr-2 h-4 w-4" /> Export Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="exportPdf(group.inventory_accountable)">
+                          <FileText class="mr-2 h-4 w-4" /> Export PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="text-destructive focus:text-destructive" @click="deleteAccountable(group.inventory_accountable)">
+                          <Trash2 class="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div v-else class="rounded-xl border p-8 text-center">
             <div class="text-lg font-semibold">No accountables found</div>

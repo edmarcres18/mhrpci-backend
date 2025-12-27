@@ -4,43 +4,52 @@
     <meta charset="UTF-8">
     <title>Inventory Codes</title>
     <style>
-        @page { margin: 16mm; }
+        @page { margin: 10mm; size: letter portrait; }
         body { font-family: Arial, sans-serif; font-size: 11px; color: #111; }
-        h1 { font-size: 18px; margin: 0 0 6px; }
-        .meta { font-size: 11px; margin-bottom: 10px; color: #333; }
-        .grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
+        .page {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: {{ $type === 'barcode' ? '135px' : '115px' }};
+            gap: 4px;
+            margin: 0 auto;
+            page-break-after: auto;
         }
         .card {
-            width: 100px;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 4px;
             text-align: center;
             box-sizing: border-box;
             background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .card img {
-            width: 1in;
-            height: 1in;
+            width: {{ $type === 'barcode' ? '3in' : '1in' }};
+            height: {{ $type === 'barcode' ? '1in' : '1in' }};
             display: block;
-            margin: 6px auto 10px;
             object-fit: contain;
         }
-        .footer { font-size: 10px; color: #444; margin-top: 6px; }
     </style>
 </head>
 <body>
-    <div class="grid">
-        @foreach($items as $item)
+    @php
+        $perPage = $type === 'barcode' ? 28 : 42; // first page only
+        $pageItems = array_slice($items, 0, $perPage);
+        $fillers = max(0, $perPage - count($pageItems));
+    @endphp
+    <div class="page">
+        @foreach($pageItems as $item)
             <div class="card">
                 @if($item['image'])
                     <img src="{{ $item['image'] }}" alt="{{ $item['item_code'] }}" />
                 @endif
             </div>
         @endforeach
+        @for($i = 0; $i < $fillers; $i++)
+            <div class="card"></div>
+        @endfor
     </div>
 </body>
 </html>

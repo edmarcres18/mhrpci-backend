@@ -76,12 +76,6 @@ class InventoryController extends Controller
             }
 
             $itemsQ = Inventory::query()->where('inventory_accountable', $acc);
-            if ($search !== '') {
-                $itemsQ->where(function ($q) use ($search) {
-                    $q->where('inventory_name', 'like', "%{$search}%")
-                        ->orWhere('inventory_brand', 'like', "%{$search}%");
-                });
-            }
             if ($status !== '') {
                 $itemsQ->where('inventory_status', $status);
             }
