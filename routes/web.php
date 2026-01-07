@@ -7,6 +7,7 @@ use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\InventoryCodeController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SiteInformationController;
 use App\Http\Controllers\SiteSettingsController;
 use App\Http\Controllers\UserController;
@@ -31,6 +32,10 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Mobile Scanner landing
+    Route::get('mobile-scanner', [ScanController::class, 'mobileAppPage'])->name('mobile-scanner.page');
+    Route::get('mobile-scanner/qr', [ScanController::class, 'apkQr'])->name('mobile-scanner.qr');
+
     // Dashboard API Routes (JSON responses for authenticated users)
     Route::prefix('api/dashboard')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats'])
@@ -80,6 +85,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('site-settings', [SiteSettingsController::class, 'update'])->name('site-settings.update');
         Route::post('site-settings/remove-logo', [SiteSettingsController::class, 'removeLogo'])->name('site-settings.remove-logo');
         Route::post('site-settings/reset', [SiteSettingsController::class, 'reset'])->name('site-settings.reset');
+
+        // Mobile App (Android) management
+        Route::get('mobile-app/manage', [ScanController::class, 'manageApk'])->name('mobile-app.manage');
+        Route::post('mobile-app/upload', [ScanController::class, 'uploadApk'])->name('mobile-app.upload');
+        Route::get('mobile-app/meta', [ScanController::class, 'latestApkMeta'])->name('mobile-app.meta');
 
         // Database Backup Management (System Admin only)
         Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');

@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavGroup } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Info, Settings, Database, Users, Box, Boxes, Mail, Phone } from 'lucide-vue-next';
+import { LayoutGrid, Info, Settings, Database, Users, Box, Boxes, Mail, Phone, QrCode, Smartphone } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -29,6 +29,11 @@ const mainNavGroups = computed<NavGroup[]>(() => {
                     title: 'Dashboard',
                     href: dashboard(),
                     icon: LayoutGrid,
+                },
+                {
+                    title: 'Mobile Scanner',
+                    href: '/mobile-scanner',
+                    icon: QrCode,
                 },
             ],
         },
@@ -103,6 +108,11 @@ const footerNavGroups = computed<NavGroup[]>(() => {
                     title: 'Site Settings',
                     href: '/site-settings',
                     icon: Settings,
+                },
+                {
+                    title: 'Mobile App (Android)',
+                    href: '/mobile-app/manage',
+                    icon: Smartphone,
                 },
                 {
                     title: 'Database Backup',

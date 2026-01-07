@@ -1,0 +1,16 @@
+{
+    "version": "1.2.0",
+    "file": "ITScanner_v1.2.0_20260107_163213.apk",
+    "alias": "ITScanner.apk",
+    "download_url": "http:\/\/192.168.1.210:1100\/mobile_app\/ITScanner.apk",
+    "file_url": "http:\/\/192.168.1.210:1100\/mobile_app\/ITScanner_v1.2.0_20260107_163213.apk",
+    "size_bytes": 65570883,
+    "size_human": "62.53 MB",
+    "uploaded_at": "2026-01-07T16:32:13+08:00",
+    "uploaded_by": {
+        "id": 1,
+        "name": "System Administrator",
+        "email": "mhrpci.it@gmail.com"
+    },
+    "notes": null
+}
