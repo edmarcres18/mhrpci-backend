@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Upload, Info, ShieldCheck, Smartphone, Download, ExternalLink } from 'lucide-vue-next';
 
 type ApkMeta = {
@@ -21,13 +22,22 @@ type ApkMeta = {
 };
 
 const page = usePage();
-const apk = computed<ApkMeta>(() => (page.props.apk as ApkMeta) || {
-    version: null,
-    download_url: '/mobile_app/ITScanner.apk',
-    size_human: null,
-    uploaded_at: null,
-    uploaded_by: null,
-    notes: null,
+const fallbackApkUrl = computed(() =>
+    import.meta.env.VITE_APP_URL
+        ? `${import.meta.env.VITE_APP_URL}/public/mobile_app/ITScanner.apk`
+        : '/mobile_app/ITScanner.apk'
+);
+
+const apk = computed<ApkMeta>(() => {
+    const meta = (page.props.apk as ApkMeta) || {};
+    return {
+        version: meta.version ?? null,
+        download_url: meta.download_url || fallbackApkUrl.value,
+        size_human: meta.size_human ?? null,
+        uploaded_at: meta.uploaded_at ?? null,
+        uploaded_by: meta.uploaded_by ?? null,
+        notes: meta.notes ?? null,
+    };
 });
 
 const breadcrumbs = [
@@ -43,6 +53,7 @@ const form = useForm({
 });
 
 const fileInput = ref<HTMLInputElement | null>(null);
+const uploadModalOpen = ref(false);
 
 const submit = () => {
     if (!form.version.trim()) {
@@ -81,7 +92,7 @@ const handleFile = (event: Event) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-8 p-4 sm:p-6 lg:p-10">
-            <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+            <div class="grid gap-4 md:grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
                 <div class="space-y-3">
                     <div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                         <ShieldCheck class="h-4 w-4" />
@@ -95,12 +106,88 @@ const handleFile = (event: Event) => {
                         </p>
                     </div>
                     <Card class="border border-muted-foreground/20 shadow-sm">
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <Smartphone class="h-5 w-5" />
-                                Latest Android build
-                            </CardTitle>
-                            <CardDescription>Snapshot of the currently published APK.</CardDescription>
+                        <CardHeader class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Smartphone class="h-5 w-5" />
+                                    Latest Android build
+                                </CardTitle>
+                                <CardDescription>Snapshot of the currently published APK.</CardDescription>
+                            </div>
+                            <Dialog v-model:open="uploadModalOpen">
+                                <DialogTrigger as-child>
+                                    <Button size="sm" class="gap-2">
+                                        <Upload class="h-4 w-4" />
+                                        Upload new APK
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent class="max-w-xl w-[94vw] sm:w-[520px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Upload new Android APK</DialogTitle>
+                                        <DialogDescription>
+                                            Provide version (e.g., 1.0.3) and upload the signed APK (up to 1 GB).
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div class="space-y-4">
+                                        <Alert variant="default" class="bg-muted">
+                                            <Info class="h-4 w-4" />
+                                            <AlertTitle>Android only</AlertTitle>
+                                            <AlertDescription>iOS/TestFlight is invite-only and not distributed here.</AlertDescription>
+                                        </Alert>
+
+                                        <div class="grid gap-4 md:grid-cols-2">
+                                            <div class="space-y-2">
+                                                <Label for="version">Version *</Label>
+                                                <Input
+                                                    id="version"
+                                                    v-model="form.version"
+                                                    placeholder="e.g., 1.0.3"
+                                                    :disabled="form.processing"
+                                                />
+                                                <p v-if="form.errors.version" class="text-sm text-destructive">{{ form.errors.version }}</p>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <Label for="notes">Notes (optional)</Label>
+                                                <textarea
+                                                    id="notes"
+                                                    v-model="form.notes"
+                                                    rows="3"
+                                                    placeholder="Release highlights, fixes, device notes"
+                                                    :disabled="form.processing"
+                                                    class="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                />
+                                                <p v-if="form.errors.notes" class="text-sm text-destructive">{{ form.errors.notes }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <Label for="apk_file">APK file *</Label>
+                                            <Input
+                                                id="apk_file"
+                                                type="file"
+                                                accept=".apk"
+                                                @change="handleFile"
+                                                ref="fileInput"
+                                                :disabled="form.processing"
+                                            />
+                                            <p class="text-xs text-muted-foreground">Accepted: .apk • Max 1 GB • Android only.</p>
+                                            <p v-if="form.errors.apk_file" class="text-sm text-destructive">{{ form.errors.apk_file }}</p>
+                                        </div>
+                                    </div>
+                                    <DialogFooter class="flex justify-between gap-2">
+                                        <Button variant="outline" @click="uploadModalOpen = false">Cancel</Button>
+                                        <div class="flex gap-2">
+                                            <Button variant="outline" :disabled="form.processing" @click="form.reset(); if (fileInput) fileInput.value = '';">
+                                                Reset
+                                            </Button>
+                                            <Button :disabled="form.processing" @click="submit">
+                                                <Upload class="mr-2 h-4 w-4" />
+                                                Upload &amp; publish
+                                            </Button>
+                                        </div>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </CardHeader>
                         <CardContent class="space-y-4">
                             <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -137,70 +224,6 @@ const handleFile = (event: Event) => {
                     </Card>
                 </div>
 
-                <Card class="border border-muted-foreground/20 shadow-sm">
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Upload class="h-5 w-5" />
-                            Upload new Android APK
-                        </CardTitle>
-                        <CardDescription>Provide version (e.g., 1.0.3) and upload the signed APK (up to 1 GB).</CardDescription>
-                    </CardHeader>
-                    <CardContent class="space-y-4">
-                        <Alert variant="default" class="bg-muted">
-                            <Info class="h-4 w-4" />
-                            <AlertTitle>Android only</AlertTitle>
-                            <AlertDescription>iOS/TestFlight is invite-only and not distributed here.</AlertDescription>
-                        </Alert>
-
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <Label for="version">Version *</Label>
-                                <Input
-                                    id="version"
-                                    v-model="form.version"
-                                    placeholder="e.g., 1.0.3"
-                                    :disabled="form.processing"
-                                />
-                                <p v-if="form.errors.version" class="text-sm text-destructive">{{ form.errors.version }}</p>
-                            </div>
-                            <div class="space-y-2">
-                                <Label for="notes">Notes (optional)</Label>
-                                <textarea
-                                    id="notes"
-                                    v-model="form.notes"
-                                    rows="3"
-                                    placeholder="Release highlights, fixes, device notes"
-                                    :disabled="form.processing"
-                                    class="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                                <p v-if="form.errors.notes" class="text-sm text-destructive">{{ form.errors.notes }}</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="apk_file">APK file *</Label>
-                        <Input
-                            id="apk_file"
-                            type="file"
-                            accept=".apk"
-                            @change="handleFile"
-                            ref="fileInput"
-                            :disabled="form.processing"
-                        />
-                        <p class="text-xs text-muted-foreground">Accepted: .apk • Max 1 GB • Android only.</p>
-                        <p v-if="form.errors.apk_file" class="text-sm text-destructive">{{ form.errors.apk_file }}</p>
-                    </div>
-
-                    <Separator />
-
-                    <div class="flex flex-wrap gap-2">
-                        <Button :disabled="form.processing" @click="submit">Upload &amp; publish</Button>
-                        <Button variant="outline" :disabled="form.processing" @click="form.reset(); if (fileInput) fileInput.value = '';">
-                            Reset
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
             </div>
         </div>
     </AppLayout>
