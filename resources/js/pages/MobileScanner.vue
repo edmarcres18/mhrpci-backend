@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { AppPageProps, BreadcrumbItemType } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
-import { Download } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Download } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -14,7 +14,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
 
 const page = usePage<AppPageProps<{ apk?: any }>>();
 const apkMeta = computed(() => (page.props.apk as any) ?? {});
-const apkUrl = computed(() => apkMeta.value.download_url || '/mobile_app/ITScanner.apk');
+const apkUrl = computed(() => import.meta.env.VITE_APP_URL ? `${import.meta.env.VITE_APP_URL}/public/mobile_app/ITScanner.apk` : '/mobile_app/ITScanner.apk');
 const apkQr = '/mobile-scanner/qr';
 const apkVersion = computed(() => apkMeta.value.version || 'Not set');
 const apkSize = computed(() => apkMeta.value.size_human || 'n/a');
@@ -38,12 +38,33 @@ const currentImage = computed(() =>
     screenshotUrls.length ? screenshotUrls[currentIndex.value % screenshotUrls.length] : null
 );
 let rotationTimer: ReturnType<typeof setInterval> | null = null;
+const autoRotateMs = 5000;
 
-onMounted(() => {
+const setIndex = (next: number) => {
+    if (!screenshotUrls.length) return;
+    currentIndex.value = (next + screenshotUrls.length) % screenshotUrls.length;
+};
+
+const nextSlide = () => {
+    setIndex(currentIndex.value + 1);
+    restartRotation();
+};
+
+const prevSlide = () => {
+    setIndex(currentIndex.value - 1);
+    restartRotation();
+};
+
+const restartRotation = () => {
+    if (rotationTimer) clearInterval(rotationTimer);
     if (screenshotUrls.length <= 1) return;
     rotationTimer = setInterval(() => {
         currentIndex.value = (currentIndex.value + 1) % screenshotUrls.length;
-    }, 3000);
+    }, autoRotateMs);
+};
+
+onMounted(() => {
+    restartRotation();
 });
 
 onBeforeUnmount(() => {
@@ -128,24 +149,53 @@ onBeforeUnmount(() => {
                     </div>
                     <div
                         v-if="currentImage"
-                        class="w-full lg:max-w-md overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-2xl backdrop-blur-md"
+                        class="w-full max-w-xs sm:max-w-sm lg:max-w-[320px] perspective-1200"
                     >
-                        <div class="relative aspect-[3/5]">
-                            <transition name="fade" mode="out-in">
-                                <img
-                                    v-if="currentImage"
-                                    :key="currentImage"
-                                    :src="currentImage"
-                                    alt="Mobile app screenshot"
-                                    class="absolute inset-0 h-full w-full object-cover"
-                                    loading="lazy"
-                                />
-                            </transition>
-                            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
-                            <div class="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                                <span class="inline-block h-2 w-2 rounded-full bg-emerald-300" />
-                                Auto-rotates every 3s
+                        <div
+                            class="relative aspect-[9/19.5] overflow-hidden rounded-[2rem] border border-white/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-3 shadow-[0_16px_48px_rgba(0,0,0,0.35)]"
+                            style="transform: rotateY(-10deg) rotateX(4deg); transform-style: preserve-3d;"
+                        >
+                            <div class="absolute inset-0 rounded-[1.75rem] border border-white/10 opacity-60" />
+                            <div class="absolute left-1/2 top-2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/30" />
+                            <div class="absolute left-4 top-2 h-1 w-5 rounded-full bg-white/20" />
+                            <div class="absolute right-4 top-2 h-1 w-5 rounded-full bg-white/20" />
+                            <div class="absolute left-4 bottom-2 h-10 w-1 rounded-full bg-white/15" />
+                            <div class="absolute right-4 bottom-2 h-10 w-1 rounded-full bg-white/15" />
+                            <div class="absolute inset-2 rounded-[1.5rem] overflow-hidden bg-black/60 will-change-transform transition-transform duration-500 ease-out"
+                                style="transform: translateZ(8px);">
+                                <transition name="fade" mode="out-in">
+                                    <img
+                                        v-if="currentImage"
+                                        :key="currentImage"
+                                        :src="currentImage"
+                                        alt="Mobile app screenshot"
+                                        class="absolute inset-0 h-full w-full object-cover"
+                                        loading="lazy"
+                                    />
+                                </transition>
                             </div>
+                            <div class="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                                <span class="inline-block h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
+                                Auto-rotates every 5s
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow hover:bg-white/20 transition"
+                                @click="prevSlide"
+                                aria-label="Previous screenshot"
+                            >
+                                <ChevronLeft class="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow hover:bg-white/20 transition"
+                                @click="nextSlide"
+                                aria-label="Next screenshot"
+                            >
+                                <ChevronRight class="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
