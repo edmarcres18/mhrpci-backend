@@ -55,6 +55,8 @@ const form = useForm({
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const uploadModalOpen = ref(false);
+const uploadProgress = ref<number | null>(null);
+const uploading = computed(() => form.processing);
 
 const submit = () => {
     if (!form.version.trim()) {
@@ -66,11 +68,23 @@ const submit = () => {
         return;
     }
 
+    uploadProgress.value = null;
     form.post('/mobile-app/upload', {
         forceFormData: true,
+        onProgress: (event) => {
+            if (event?.progress) {
+                const pct = Math.round(event.progress * 100);
+                uploadProgress.value = pct;
+            }
+        },
         onSuccess: () => {
             form.reset('apk_file');
             if (fileInput.value) fileInput.value.value = '';
+            uploadProgress.value = null;
+            uploadModalOpen.value = false;
+        },
+        onFinish: () => {
+            uploadProgress.value = null;
         },
     });
 };
