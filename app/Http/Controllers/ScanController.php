@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
@@ -76,40 +77,51 @@ class ScanController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $dir = $this->getApkDirectory();
-        if (! File::exists($dir)) {
-            File::makeDirectory($dir, 0755, true);
+        try {
+            $dir = $this->getApkDirectory();
+            if (! File::exists($dir)) {
+                File::makeDirectory($dir, 0755, true);
+            }
+
+            $versionSlug = preg_replace('/[^A-Za-z0-9._-]/', '_', $validated['version']);
+            $timestamp = now()->format('Ymd_His');
+            $fileName = "ITScanner_v{$versionSlug}_{$timestamp}.apk";
+            $uploadedFile = $request->file('apk_file');
+            $uploadedFile->move($dir, $fileName);
+
+            // Set latest alias
+            $aliasPath = $dir.DIRECTORY_SEPARATOR.$this->getApkAlias();
+            File::copy($dir.DIRECTORY_SEPARATOR.$fileName, $aliasPath);
+
+            $sizeBytes = File::size($aliasPath);
+            $meta = [
+                'version' => $validated['version'],
+                'file' => $fileName,
+                'alias' => $this->getApkAlias(),
+                'download_url' => $this->getApkDownloadUrl(),
+                'file_url' => url('/mobile_app/'.$fileName),
+                'size_bytes' => $sizeBytes,
+                'size_human' => $this->formatBytes($sizeBytes),
+                'uploaded_at' => now()->toIso8601String(),
+                'uploaded_by' => $currentUser ? [
+                    'id' => $currentUser->id,
+                    'name' => $currentUser->name,
+                    'email' => $currentUser->email,
+                ] : null,
+                'notes' => $validated['notes'] ?? null,
+            ];
+
+            File::put($this->getApkMetaPath(), json_encode($meta, JSON_PRETTY_PRINT));
+        } catch (\Throwable $e) {
+            Log::error('APK upload failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withErrors([
+                'apk_file' => 'Upload failed. Please try again or contact support.',
+            ]);
         }
-
-        $versionSlug = preg_replace('/[^A-Za-z0-9._-]/', '_', $validated['version']);
-        $timestamp = now()->format('Ymd_His');
-        $fileName = "ITScanner_v{$versionSlug}_{$timestamp}.apk";
-        $uploadedFile = $request->file('apk_file');
-        $uploadedFile->move($dir, $fileName);
-
-        // Set latest alias
-        $aliasPath = $dir.DIRECTORY_SEPARATOR.$this->getApkAlias();
-        File::copy($dir.DIRECTORY_SEPARATOR.$fileName, $aliasPath);
-
-        $sizeBytes = File::size($aliasPath);
-        $meta = [
-            'version' => $validated['version'],
-            'file' => $fileName,
-            'alias' => $this->getApkAlias(),
-            'download_url' => $this->getApkDownloadUrl(),
-            'file_url' => url('/mobile_app/'.$fileName),
-            'size_bytes' => $sizeBytes,
-            'size_human' => $this->formatBytes($sizeBytes),
-            'uploaded_at' => now()->toIso8601String(),
-            'uploaded_by' => $currentUser ? [
-                'id' => $currentUser->id,
-                'name' => $currentUser->name,
-                'email' => $currentUser->email,
-            ] : null,
-            'notes' => $validated['notes'] ?? null,
-        ];
-
-        File::put($this->getApkMetaPath(), json_encode($meta, JSON_PRETTY_PRINT));
 
         return redirect()
             ->route('mobile-app.manage')
