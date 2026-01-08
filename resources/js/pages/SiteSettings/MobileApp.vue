@@ -22,10 +22,11 @@ type ApkMeta = {
 };
 
 const page = usePage();
+
+const appUrl = (import.meta as any).env?.APP_URL || (import.meta as any).env?.VITE_APP_URL || '';
+const cleanAppUrl = appUrl ? appUrl.replace(/\/+$/, '') : '';
 const fallbackApkUrl = computed(() =>
-    import.meta.env.VITE_APP_URL
-        ? `${import.meta.env.VITE_APP_URL}/public/mobile_app/ITScanner.apk`
-        : '/mobile_app/ITScanner.apk'
+    cleanAppUrl ? `${cleanAppUrl}/public/mobile_app/ITScanner.apk` : '/mobile_app/ITScanner.apk'
 );
 
 const apk = computed<ApkMeta>(() => {
