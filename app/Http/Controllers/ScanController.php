@@ -162,6 +162,9 @@ class ScanController extends Controller
         if (File::exists($metaPath)) {
             $json = json_decode(File::get($metaPath), true);
             if (is_array($json)) {
+                // Always refresh URL-related fields from current APP_URL to avoid stale hostnames
+                $json['download_url'] = $this->getApkDownloadUrl();
+                $json['file_url'] = url('/mobile_app/'.($json['file'] ?? $this->getApkAlias()));
                 return array_merge($defaults, $json);
             }
         }
