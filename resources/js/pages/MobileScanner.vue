@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
                             </div>
                             <div class="space-y-3 text-white/80">
                                 <div class="grid gap-2 text-sm sm:text-base">
-                                    <div><strong>Latest version:</strong> {{ apkVersion }}</div>
+                                    <div><strong>Latest version:</strong> 1.0.0</div>
                                     <div><strong>Download size:</strong> {{ apkSize }}</div>
                                     <div><strong>Network:</strong> Active internet required for download and sync.</div>
                                 </div>
