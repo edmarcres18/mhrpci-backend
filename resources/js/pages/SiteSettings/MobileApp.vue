@@ -183,19 +183,37 @@ const handleFile = (event: Event) => {
                                                 accept=".apk"
                                                 @change="handleFile"
                                                 ref="fileInput"
-                                                :disabled="form.processing"
+                                                :disabled="uploading"
                                             />
                                             <p class="text-xs text-muted-foreground">Accepted: .apk • Max 1 GB • Android only.</p>
                                             <p v-if="form.errors.apk_file" class="text-sm text-destructive">{{ form.errors.apk_file }}</p>
                                         </div>
+
+                                        <div v-if="uploading" class="space-y-2 rounded-md border border-muted/40 bg-muted/40 p-3">
+                                            <div class="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                                                <span>Uploading APK...</span>
+                                                <span v-if="uploadProgress !== null">{{ uploadProgress }}%</span>
+                                            </div>
+                                            <div class="relative h-2 overflow-hidden rounded bg-muted">
+                                                <div
+                                                    class="h-full bg-primary transition-all duration-300"
+                                                    :style="{ width: `${uploadProgress ?? 0}%` }"
+                                                    role="progressbar"
+                                                    :aria-valuenow="uploadProgress ?? 0"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                />
+                                            </div>
+                                            <p class="text-xs text-muted-foreground">Keep this window open until the upload finishes.</p>
+                                        </div>
                                     </div>
                                     <DialogFooter class="flex justify-between gap-2">
-                                        <Button variant="outline" @click="uploadModalOpen = false">Cancel</Button>
+                                        <Button variant="outline" :disabled="uploading" @click="uploadModalOpen = false">Cancel</Button>
                                         <div class="flex gap-2">
-                                            <Button variant="outline" :disabled="form.processing" @click="form.reset(); if (fileInput) fileInput.value = '';">
+                                            <Button variant="outline" :disabled="uploading" @click="form.reset(); if (fileInput) fileInput.value = '';">
                                                 Reset
                                             </Button>
-                                            <Button :disabled="form.processing" @click="submit">
+                                            <Button :disabled="uploading" @click="submit">
                                                 <Upload class="mr-2 h-4 w-4" />
                                                 Upload &amp; publish
                                             </Button>

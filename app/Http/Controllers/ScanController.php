@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\Writer\PngWriter;
@@ -27,6 +29,39 @@ class ScanController extends Controller
         return Inertia::render('MobileScanner', [
             'apk' => $this->getApkMeta(),
         ]);
+    }
+
+    /**
+     * Convert PHP size settings to bytes and return the lower of upload_max_filesize and post_max_size.
+     */
+    private function getPhpUploadCapBytes(): int
+    {
+        $upload = $this->toBytes(ini_get('upload_max_filesize'));
+        $post = $this->toBytes(ini_get('post_max_size'));
+        $values = array_filter([$upload, $post], fn ($v) => $v > 0);
+        return empty($values) ? 0 : min($values);
+    }
+
+    private function toBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+        switch ($unit) {
+            case 'g':
+                $number *= 1024;
+            // no break
+            case 'm':
+                $number *= 1024;
+            // no break
+            case 'k':
+                $number *= 1024;
+        }
+
+        return (int) $number;
     }
 
     /**
@@ -71,6 +106,16 @@ class ScanController extends Controller
             abort(403, 'You do not have permission to upload mobile apps.');
         }
 
+        // Ensure PHP upload limits can handle the configured 1GB validation cap
+        $serverLimit = $this->getPhpUploadCapBytes();
+        $validationCap = 1048576 * 1024; // 1GB in bytes (Laravel validation max 1048576 KB)
+        if ($serverLimit > 0 && $serverLimit < $validationCap) {
+            $humanLimit = $this->formatBytes($serverLimit);
+            return back()->withErrors([
+                'apk_file' => "Server upload limit is {$humanLimit}. Please increase upload_max_filesize and post_max_size to at least 1GB.",
+            ]);
+        }
+
         $validated = $request->validate([
             'version' => ['required', 'string', 'max:50'],
             'apk_file' => ['required', 'file', 'mimes:apk,zip', 'max:1048576'], // 1GB
@@ -80,7 +125,12 @@ class ScanController extends Controller
         try {
             $dir = $this->getApkDirectory();
             if (! File::exists($dir)) {
-                File::makeDirectory($dir, 0755, true);
+                if (! File::makeDirectory($dir, 0755, true)) {
+                    throw new FileException('Unable to create APK directory.');
+                }
+            }
+            if (! File::isWritable($dir)) {
+                throw new FileException('APK directory is not writable.');
             }
 
             $versionSlug = preg_replace('/[^A-Za-z0-9._-]/', '_', $validated['version']);
@@ -89,9 +139,16 @@ class ScanController extends Controller
             $uploadedFile = $request->file('apk_file');
             $uploadedFile->move($dir, $fileName);
 
+            $sourcePath = $dir.DIRECTORY_SEPARATOR.$fileName;
+            if (! File::exists($sourcePath)) {
+                throw new FileException('Uploaded APK could not be saved.');
+            }
+
             // Set latest alias
             $aliasPath = $dir.DIRECTORY_SEPARATOR.$this->getApkAlias();
-            File::copy($dir.DIRECTORY_SEPARATOR.$fileName, $aliasPath);
+            if (! File::copy($sourcePath, $aliasPath)) {
+                throw new FileException('Failed to set latest APK alias.');
+            }
 
             $sizeBytes = File::size($aliasPath);
             $meta = [
