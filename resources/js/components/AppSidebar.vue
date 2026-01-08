@@ -110,11 +110,6 @@ const footerNavGroups = computed<NavGroup[]>(() => {
                     icon: Settings,
                 },
                 {
-                    title: 'Mobile App (Android)',
-                    href: '/mobile-app/manage',
-                    icon: Smartphone,
-                },
-                {
                     title: 'Database Backup',
                     href: '/database-backup',
                     icon: Database,

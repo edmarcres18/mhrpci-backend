@@ -86,11 +86,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('site-settings/remove-logo', [SiteSettingsController::class, 'removeLogo'])->name('site-settings.remove-logo');
         Route::post('site-settings/reset', [SiteSettingsController::class, 'reset'])->name('site-settings.reset');
 
-        // Mobile App (Android) management
-        Route::get('mobile-app/manage', [ScanController::class, 'manageApk'])->name('mobile-app.manage');
-        Route::post('mobile-app/upload', [ScanController::class, 'uploadApk'])->name('mobile-app.upload');
-        Route::get('mobile-app/meta', [ScanController::class, 'latestApkMeta'])->name('mobile-app.meta');
-
         // Database Backup Management (System Admin only)
         Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
         Route::post('database-backup/create', [DatabaseBackupController::class, 'backup'])->name('database-backup.create');

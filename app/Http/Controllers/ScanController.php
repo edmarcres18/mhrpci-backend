@@ -7,11 +7,8 @@ use App\Models\ScanLog;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
@@ -32,39 +29,6 @@ class ScanController extends Controller
     }
 
     /**
-     * Convert PHP size settings to bytes and return the lower of upload_max_filesize and post_max_size.
-     */
-    private function getPhpUploadCapBytes(): int
-    {
-        $upload = $this->toBytes(ini_get('upload_max_filesize'));
-        $post = $this->toBytes(ini_get('post_max_size'));
-        $values = array_filter([$upload, $post], fn ($v) => $v > 0);
-        return empty($values) ? 0 : min($values);
-    }
-
-    private function toBytes(string $value): int
-    {
-        $value = trim($value);
-        if ($value === '') {
-            return 0;
-        }
-        $unit = strtolower(substr($value, -1));
-        $number = (float) $value;
-        switch ($unit) {
-            case 'g':
-                $number *= 1024;
-            // no break
-            case 'm':
-                $number *= 1024;
-            // no break
-            case 'k':
-                $number *= 1024;
-        }
-
-        return (int) $number;
-    }
-
-    /**
      * Return a QR image that points to the public APK download.
      */
     public function apkQr(): JsonResponse|\Symfony\Component\HttpFoundation\Response
@@ -79,121 +43,6 @@ class ScanController extends Controller
             ->build();
 
         return response($result->getString(), 200, ['Content-Type' => 'image/png']);
-    }
-
-    /**
-     * Show System Admin page to manage Android APK versions.
-     */
-    public function manageApk(): Response
-    {
-        $currentUser = auth()->user();
-        if (! $currentUser || ! $currentUser->isSystemAdmin()) {
-            abort(403, 'You do not have permission to manage the mobile app.');
-        }
-
-        return Inertia::render('SiteSettings/MobileApp', [
-            'apk' => $this->getApkMeta(),
-        ]);
-    }
-
-    /**
-     * Upload a new Android APK (System Admin only) and set it as the latest version.
-     */
-    public function uploadApk(Request $request)
-    {
-        $currentUser = auth()->user();
-        if (! $currentUser || ! $currentUser->isSystemAdmin()) {
-            abort(403, 'You do not have permission to upload mobile apps.');
-        }
-
-        // Ensure PHP upload limits can handle the configured 1GB validation cap
-        $serverLimit = $this->getPhpUploadCapBytes();
-        $validationCap = 1048576 * 1024; // 1GB in bytes (Laravel validation max 1048576 KB)
-        if ($serverLimit > 0 && $serverLimit < $validationCap) {
-            $humanLimit = $this->formatBytes($serverLimit);
-            return back()->withErrors([
-                'apk_file' => "Server upload limit is {$humanLimit}. Please increase upload_max_filesize and post_max_size to at least 1GB.",
-            ]);
-        }
-
-        $validated = $request->validate([
-            'version' => ['required', 'string', 'max:50'],
-            'apk_file' => ['required', 'file', 'mimes:apk,zip', 'max:1048576'], // 1GB
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        try {
-            $dir = $this->getApkDirectory();
-            if (! File::exists($dir)) {
-                if (! File::makeDirectory($dir, 0755, true)) {
-                    throw new FileException('Unable to create APK directory.');
-                }
-            }
-            if (! File::isWritable($dir)) {
-                throw new FileException('APK directory is not writable.');
-            }
-
-            $versionSlug = preg_replace('/[^A-Za-z0-9._-]/', '_', $validated['version']);
-            $timestamp = now()->format('Ymd_His');
-            $fileName = "ITScanner_v{$versionSlug}_{$timestamp}.apk";
-            $uploadedFile = $request->file('apk_file');
-            $uploadedFile->move($dir, $fileName);
-
-            $sourcePath = $dir.DIRECTORY_SEPARATOR.$fileName;
-            if (! File::exists($sourcePath)) {
-                throw new FileException('Uploaded APK could not be saved.');
-            }
-
-            // Set latest alias
-            $aliasPath = $dir.DIRECTORY_SEPARATOR.$this->getApkAlias();
-            if (! File::copy($sourcePath, $aliasPath)) {
-                throw new FileException('Failed to set latest APK alias.');
-            }
-
-            $sizeBytes = File::size($aliasPath);
-            $meta = [
-                'version' => $validated['version'],
-                'file' => $fileName,
-                'alias' => $this->getApkAlias(),
-                'download_url' => $this->getApkDownloadUrl(),
-                'file_url' => url('/mobile_app/'.$fileName),
-                'size_bytes' => $sizeBytes,
-                'size_human' => $this->formatBytes($sizeBytes),
-                'uploaded_at' => now()->toIso8601String(),
-                'uploaded_by' => $currentUser ? [
-                    'id' => $currentUser->id,
-                    'name' => $currentUser->name,
-                    'email' => $currentUser->email,
-                ] : null,
-                'notes' => $validated['notes'] ?? null,
-            ];
-
-            File::put($this->getApkMetaPath(), json_encode($meta, JSON_PRETTY_PRINT));
-        } catch (\Throwable $e) {
-            Log::error('APK upload failed', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return back()->withErrors([
-                'apk_file' => 'Upload failed. Please try again or contact support.',
-            ]);
-        }
-
-        return redirect()
-            ->route('mobile-app.manage')
-            ->with('success', 'Android APK uploaded and set as latest.');
-    }
-
-    /**
-     * API endpoint to fetch latest Android APK metadata.
-     */
-    public function latestApkMeta(): JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'data' => $this->getApkMeta(),
-        ]);
     }
 
     private function getApkDirectory(): string
